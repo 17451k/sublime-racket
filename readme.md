@@ -8,6 +8,7 @@ the Racket syntax). `.rkt` files understand `@`-expressions anywhere in the
 file, matching `#lang at-exp racket` semantics.
 
 Current features include:
+
 - syntax definition and highlighting: every Racket form and literal is scoped
 - build system: run, test, compile and format from command palette
 - symbol indexing: `Goto Symbol` lists defined functions and structs
@@ -64,6 +65,7 @@ Known limitations can be found in the [dev docs](./docs/dev.md).
 ### Build system
 
 A build system is included (`Tools > Build With...`):
+
 - **Run** (`racket`): runs the current file and shows its output
 - **Test** and **Test Directory** (`raco test`): runs `test` submodules and
   `rackunit` tests in the current file, or in every file under its directory
