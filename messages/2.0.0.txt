@@ -1,0 +1,27 @@
+Racket 2.0.0
+============
+
+A complete rewrite of the package on the Sublime Text 4 syntax engine.
+Current feature set:
+
+Syntax highlighting
+  - Racket: .rkt, .rktl and .rktd files.
+  - Scribble: .scrbl files.
+  - Every form, procedure and value exported by the `racket` module is
+    recognised; the lists are generated from Racket itself.
+  - @-expressions are understood anywhere in .rkt files (#lang at-exp).
+
+Editing
+  - Goto Symbol (Ctrl/Cmd+R) lists every defined function and struct.
+  - Toggle Comment (Ctrl/Cmd+/) inserts "; "; block comment inserts #| |#.
+  - Enter after an open bracket indents; a close bracket outdents.
+  - Double-click selects whole identifiers such as string->list or null?.
+
+Build system (Tools > Build With...)
+  - Run, Test, Test Directory, Compile, Format (needs `raco pkg install fmt`),
+    Expand, Check Requires.
+  - Error locations in the output are clickable.
+  - racket and raco must be on the PATH Sublime sees.
+
+Please report highlighting problems, preferably with a minimal snippet:
+https://github.com/17451k/sublime-racket/issues

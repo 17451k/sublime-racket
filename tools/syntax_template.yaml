@@ -1,0 +1,720 @@
+%YAML 1.2
+---
+name: Racket
+scope: source.racket
+version: 2
+file_extensions:
+  - rkt
+  - rktl
+  - rktd
+first_line_match: '^#lang\b'
+
+variables:
+  symbol: '[^\s()\[\]{}"'',`;|\\]+'
+  sym_boundary: '(?=[\s()\[\]{}"'',`;]|$)'
+  keywords: '__FORM_LIST__'
+  builtins: '__PROCEDURE_LIST__'
+  builtin_vars: '__VALUE_LIST__'
+  operators: '(?:\+|-|\*|/|=|<=|>=|<|>)'
+
+contexts:
+  main:
+    - include: comments
+    - include: sexp-comment
+    - include: lang-directive
+    - include: reader-directive
+    - include: ci-cs-marker
+    - include: heredoc-string
+    - include: regex-string
+    - include: byte-string
+    - include: string
+    - include: character
+    - include: boolean
+    - include: number
+    - include: keyword-literal
+    - include: quote-marks
+    - include: at-expression
+    - include: literal-prefixes
+    - include: brackets-open
+    - include: brackets-close-stray
+    - include: piped-symbol
+    - include: non-head-symbol
+
+  #############################################################
+  # Comments
+  #############################################################
+  comments:
+    - match: ';'
+      scope: punctuation.definition.comment.racket
+      push: line-comment
+    - match: '#\|'
+      scope: punctuation.definition.comment.begin.racket
+      push: block-comment
+
+  line-comment:
+    - meta_scope: comment.line.semicolon.racket
+    - match: $
+      pop: true
+
+  block-comment:
+    - meta_scope: comment.block.racket
+    - match: '#\|'
+      scope: punctuation.definition.comment.begin.racket
+      push: block-comment
+    - match: '\|#'
+      scope: punctuation.definition.comment.end.racket
+      pop: true
+
+  #############################################################
+  # Datum (sexp) comment: #; followed by exactly one datum
+  #############################################################
+  sexp-comment:
+    - match: '#;'
+      scope: punctuation.definition.comment.racket
+      push: sexp-comment-datum
+
+  sexp-comment-datum:
+    - meta_scope: comment.block.sexp.racket
+    - match: '\s+'
+    - match: ';.*$'
+    - match: "[',`]+|#'|#`|#,@?"
+    - match: '\('
+      set: sexp-comment-list-paren
+    - match: '\['
+      set: sexp-comment-list-bracket
+    - match: '\{'
+      set: sexp-comment-list-brace
+    - match: '"'
+      set: sexp-comment-string
+    - match: '{{symbol}}'
+      pop: true
+    - match: '(?=\S)'
+      pop: true
+
+  sexp-comment-list-paren:
+    - meta_scope: comment.block.sexp.racket
+    - match: '\('
+      push: sexp-comment-nested-paren
+    - match: '\)'
+      pop: true
+
+  sexp-comment-nested-paren:
+    - meta_scope: comment.block.sexp.racket
+    - match: '\('
+      push: sexp-comment-nested-paren
+    - match: '\)'
+      pop: true
+
+  sexp-comment-list-bracket:
+    - meta_scope: comment.block.sexp.racket
+    - match: '\['
+      push: sexp-comment-nested-bracket
+    - match: '\]'
+      pop: true
+
+  sexp-comment-nested-bracket:
+    - meta_scope: comment.block.sexp.racket
+    - match: '\['
+      push: sexp-comment-nested-bracket
+    - match: '\]'
+      pop: true
+
+  sexp-comment-list-brace:
+    - meta_scope: comment.block.sexp.racket
+    - match: '\{'
+      push: sexp-comment-nested-brace
+    - match: '\}'
+      pop: true
+
+  sexp-comment-nested-brace:
+    - meta_scope: comment.block.sexp.racket
+    - match: '\{'
+      push: sexp-comment-nested-brace
+    - match: '\}'
+      pop: true
+
+  sexp-comment-string:
+    - meta_scope: comment.block.sexp.racket
+    - match: '\\.'
+    - match: '"'
+      pop: true
+
+  #############################################################
+  # #lang / #reader directives
+  #############################################################
+  lang-directive:
+    - match: '(#lang)(\s+)(\S+)'
+      captures:
+        1: keyword.control.lang.racket
+        3: variable.language.lang-name.racket
+
+  reader-directive:
+    - match: '(#reader)(\s+)(\S+)'
+      captures:
+        1: keyword.control.lang.racket
+        3: variable.language.lang-name.racket
+
+  ci-cs-marker:
+    - match: '#(?:ci|cs|CI|CS)(?=[\s()\[\]{}]|$)'
+      scope: comment.racket
+
+  #############################################################
+  # Strings
+  #############################################################
+  string:
+    - match: '"'
+      scope: punctuation.definition.string.begin.racket
+      push: string-body
+
+  string-body:
+    - meta_scope: string.quoted.double.racket
+    - include: string-escapes
+    - match: '"'
+      scope: punctuation.definition.string.end.racket
+      pop: true
+
+  string-escapes:
+    - match: '\\x[0-9a-fA-F]{1,2}'
+      scope: constant.character.escape.racket
+    - match: '\\u[0-9a-fA-F]{1,4}'
+      scope: constant.character.escape.racket
+    - match: '\\U[0-9a-fA-F]{1,8}'
+      scope: constant.character.escape.racket
+    - match: '\\[0-7]{1,3}'
+      scope: constant.character.escape.racket
+    - match: '\\.'
+      scope: constant.character.escape.racket
+
+  byte-string:
+    - match: '#"'
+      scope: punctuation.definition.string.begin.racket
+      push: byte-string-body
+
+  byte-string-body:
+    - meta_scope: string.quoted.double.byte.racket
+    - include: string-escapes
+    - match: '"'
+      scope: punctuation.definition.string.end.racket
+      pop: true
+
+  heredoc-string:
+    - match: '(#<<)(\S+)'
+      captures:
+        1: punctuation.definition.string.begin.racket
+        2: constant.other.heredoc-tag.racket
+      push:
+        - meta_scope: string.unquoted.heredoc.racket
+        - match: '^\2$'
+          pop: true
+
+  regex-string:
+    - match: '#(?:rx|px)#"'
+      scope: punctuation.definition.string.begin.racket
+      push: regex-string-body
+    - match: '#(?:rx|px)"'
+      scope: punctuation.definition.string.begin.racket
+      push: regex-string-body
+
+  regex-string-body:
+    - meta_scope: string.regexp.racket
+    - match: '\\.'
+      scope: constant.character.escape.racket
+    - match: '"'
+      scope: punctuation.definition.string.end.racket
+      pop: true
+
+  #############################################################
+  # Characters
+  #############################################################
+  character:
+    - match: '#\\(?:nul|null|backspace|tab|newline|linefeed|vtab|page|return|space|rubout|delete|altmode|alarm)(?=[\s()\[\]{}"'',`;]|$)'
+      scope: constant.character.racket
+    - match: '#\\x[0-9a-fA-F]{1,2}'
+      scope: constant.character.racket
+    - match: '#\\u[0-9a-fA-F]{1,4}'
+      scope: constant.character.racket
+    - match: '#\\U[0-9a-fA-F]{1,8}'
+      scope: constant.character.racket
+    - match: '#\\[0-7]{3}'
+      scope: constant.character.racket
+    - match: '#\\.'
+      scope: constant.character.racket
+
+  #############################################################
+  # Booleans
+  #############################################################
+  boolean:
+    - match: '#(?:true|false|[tfTF])(?=[\s()\[\]{}"'',`;]|$)'
+      scope: constant.language.boolean.racket
+
+  #############################################################
+  # Numbers
+  #############################################################
+  number:
+    - match: '(?:#[eibodxEIBODX])*[+-]?(?:inf\.0|nan\.0)'
+      scope: constant.numeric.racket
+    - match: '(?:#[eibodxEIBODX])+(?:[+-]?[0-9a-fA-F#]+(?:/[0-9a-fA-F#]+)?(?:\.[0-9a-fA-F#]*)?(?:[eEsSfFdDlL][+-]?[0-9]+)?(?:[+-][0-9a-fA-F#]*(?:/[0-9a-fA-F#]+)?i)?)'
+      scope: constant.numeric.racket
+    - match: '[+-]?[0-9]+/[0-9]+'
+      scope: constant.numeric.racket
+    - match: '[+-]?[0-9]+\.[0-9]*(?:[eEsSfFdDlL][+-]?[0-9]+)?[+-]?[0-9]*i?\b'
+      scope: constant.numeric.racket
+    - match: '[+-]?\.[0-9]+(?:[eEsSfFdDlL][+-]?[0-9]+)?i?\b'
+      scope: constant.numeric.racket
+    - match: '[+-]?[0-9]+(?:[eEsSfFdDlL][+-]?[0-9]+)?[+-][0-9]+i\b'
+      scope: constant.numeric.racket
+    - match: '[+-]?[0-9]+(?:[eEsSfFdDlL][+-]?[0-9]+)?i\b'
+      scope: constant.numeric.racket
+    - match: '[+-]?[0-9]+(?:[eEsSfFdDlL][+-]?[0-9]+)?(?=[\s()\[\]{}"'',`;]|$)'
+      scope: constant.numeric.racket
+
+  #############################################################
+  # Keywords (#:foo)
+  #############################################################
+  keyword-literal:
+    - match: '#:{{symbol}}'
+      scope: constant.other.keyword.racket
+
+  #############################################################
+  # Quote / quasiquote / unquote / syntax markers
+  #############################################################
+  quote-marks:
+    - match: "(#,@|#,|#'|#`|,@|,|'|`)({{symbol}})"
+      captures:
+        1: keyword.operator.quote.racket
+        2: constant.other.symbol.racket
+    - match: "#,@|#,|#'|#`|,@|,|'|`"
+      scope: keyword.operator.quote.racket
+
+  #############################################################
+  # Vector / hash / struct literal prefixes
+  #############################################################
+  literal-prefixes:
+    - match: '(#vu8)(\()'
+      captures:
+        1: keyword.other.literal-prefix.racket
+        2: punctuation.definition.vector.begin.racket
+      push: paren-body
+    - match: '(#hasheqv)(\()'
+      captures:
+        1: keyword.other.literal-prefix.racket
+        2: punctuation.definition.hash.begin.racket
+      push: paren-body
+    - match: '(#hasheq)(\()'
+      captures:
+        1: keyword.other.literal-prefix.racket
+        2: punctuation.definition.hash.begin.racket
+      push: paren-body
+    - match: '(#hash)(\()'
+      captures:
+        1: keyword.other.literal-prefix.racket
+        2: punctuation.definition.hash.begin.racket
+      push: paren-body
+    - match: '(#s)(\()'
+      captures:
+        1: keyword.other.literal-prefix.racket
+        2: punctuation.definition.struct.begin.racket
+      push: paren-body
+    - match: '(#)(\()'
+      captures:
+        1: keyword.other.literal-prefix.racket
+        2: punctuation.definition.vector.begin.racket
+      push: paren-body
+
+  #############################################################
+  # Brackets
+  #############################################################
+  brackets-open:
+    - match: '\('
+      scope: punctuation.section.parens.begin.racket
+      push: [paren-body, list-head-paren]
+    - match: '\['
+      scope: punctuation.section.brackets.begin.racket
+      push: [bracket-body, list-head-bracket]
+    - match: '\{'
+      scope: punctuation.section.braces.begin.racket
+      push: [brace-body, list-head-brace]
+
+  brackets-close-stray:
+    - match: '\)'
+      scope: punctuation.section.parens.end.racket
+    - match: '\]'
+      scope: punctuation.section.brackets.end.racket
+    - match: '\}'
+      scope: punctuation.section.braces.end.racket
+
+  paren-body:
+    - meta_scope: meta.parens.racket meta.sexp.racket
+    - match: '\)'
+      scope: punctuation.section.parens.end.racket
+      pop: true
+    - include: main
+
+  bracket-body:
+    - meta_scope: meta.brackets.racket meta.sexp.racket
+    - match: '\]'
+      scope: punctuation.section.brackets.end.racket
+      pop: true
+    - include: main
+
+  brace-body:
+    - meta_scope: meta.braces.racket meta.sexp.racket
+    - match: '\}'
+      scope: punctuation.section.braces.end.racket
+      pop: true
+    - include: main
+
+  #############################################################
+  # Head-of-list handling
+  #############################################################
+  list-head-paren:
+    - match: '\s+'
+    - include: comments
+    - include: head-special-forms
+    - include: head-keyword
+    - include: head-operator
+    - include: head-builtin
+    - match: '(?=[+-]?(?:[0-9]|\.[0-9]|(?:inf|nan)\.0)|["#''`,])'
+      pop: true
+    - match: '{{symbol}}'
+      scope: variable.function.racket
+      pop: true
+    - match: '(?=\S)'
+      pop: true
+
+  list-head-brace:
+    - match: '\s+'
+    - include: comments
+    - include: head-special-forms
+    - include: head-keyword
+    - include: head-operator
+    - include: head-builtin
+    - match: '(?=[+-]?(?:[0-9]|\.[0-9]|(?:inf|nan)\.0)|["#''`,])'
+      pop: true
+    - match: '{{symbol}}'
+      scope: variable.function.racket
+      pop: true
+    - match: '(?=\S)'
+      pop: true
+
+  list-head-bracket:
+    - match: '\s+'
+    - include: comments
+    - include: head-special-forms
+    - include: head-keyword
+    - include: head-operator
+    - include: head-builtin
+    - match: '(?=[+-]?(?:[0-9]|\.[0-9]|(?:inf|nan)\.0)|["#''`,])'
+      pop: true
+    - match: '{{symbol}}'
+      scope: variable.parameter.racket
+      pop: true
+    - match: '(?=\S)'
+      pop: true
+
+  head-keyword:
+    - match: '{{keywords}}{{sym_boundary}}'
+      scope: keyword.control.racket
+      pop: true
+
+  head-operator:
+    - match: '{{operators}}{{sym_boundary}}'
+      scope: keyword.operator.racket
+      pop: true
+
+  head-builtin:
+    - match: '{{builtins}}{{sym_boundary}}'
+      scope: support.function.builtin.racket
+      pop: true
+
+  head-special-forms:
+    - match: 'require{{sym_boundary}}'
+      scope: keyword.control.import.racket
+      pop: true
+    - match: 'provide{{sym_boundary}}'
+      scope: keyword.control.export.racket
+      pop: true
+    - match: '(?:define|define-syntax-rule|define-syntax){{sym_boundary}}'
+      scope: keyword.declaration.function.racket
+      set: after-define-name
+    - match: '(?:define-for-syntax|define/contract|define/public|define/private|define/override|define/augment|define-inline){{sym_boundary}}'
+      scope: keyword.control.racket
+      set: after-define-name
+    - match: 'define-values{{sym_boundary}}'
+      scope: keyword.declaration.function.racket
+      set: after-param-list
+    - match: '(?:lambda|λ|define-syntaxes|define-values-for-export|define-values-for-syntax){{sym_boundary}}'
+      scope: keyword.control.racket
+      set: after-param-list
+    - match: '(?:struct|define-struct){{sym_boundary}}'
+      scope: keyword.declaration.struct.racket
+      set: after-struct-name
+
+  #############################################################
+  # define / define-syntax ... NAME (or (NAME params...))
+  #############################################################
+  after-define-name:
+    - match: '\s+'
+    - include: comments
+    - match: '(?=[)\]}])'
+      pop: true
+    - match: '\('
+      scope: punctuation.section.parens.begin.racket
+      set: define-name-list
+    - match: '{{symbol}}'
+      scope: entity.name.function.racket
+      pop: true
+    - match: '(?=\S)'
+      pop: true
+
+  define-name-list:
+    - match: '\s+'
+    - include: comments
+    - match: '\)'
+      scope: punctuation.section.parens.end.racket
+      pop: true
+    - match: '\('
+      scope: punctuation.section.parens.begin.racket
+      set: [define-params-rest, define-name-list]
+    - match: '{{symbol}}'
+      scope: entity.name.function.racket
+      set: define-params-rest
+    - match: '(?=\S)'
+      set: define-params-rest
+
+  define-params-rest:
+    - meta_scope: meta.parens.racket meta.sexp.racket
+    - match: '\)'
+      scope: punctuation.section.parens.end.racket
+      pop: true
+    - match: '\('
+      scope: punctuation.section.parens.begin.racket
+      push: define-params-rest
+    - match: '{{symbol}}'
+      scope: variable.parameter.racket
+    - include: main
+
+  #############################################################
+  # lambda / define-values / define-syntaxes ... (params...)
+  #############################################################
+  after-param-list:
+    - match: '\s+'
+    - include: comments
+    - match: '(?=[)\]}])'
+      pop: true
+    - match: '\('
+      scope: punctuation.section.parens.begin.racket
+      set: param-list-body
+    - match: '\['
+      scope: punctuation.section.brackets.begin.racket
+      set: param-list-body-bracket
+    - match: '{{symbol}}'
+      scope: variable.parameter.racket
+      pop: true
+    - match: '(?=\S)'
+      pop: true
+
+  param-list-body:
+    - meta_scope: meta.parens.racket meta.sexp.racket
+    - match: '\)'
+      scope: punctuation.section.parens.end.racket
+      pop: true
+    - match: '\('
+      scope: punctuation.section.parens.begin.racket
+      push: param-list-body
+    - match: '\['
+      scope: punctuation.section.brackets.begin.racket
+      push: param-list-body-bracket
+    - match: '{{symbol}}'
+      scope: variable.parameter.racket
+    - include: main
+
+  param-list-body-bracket:
+    - meta_scope: meta.brackets.racket meta.sexp.racket
+    - match: '\]'
+      scope: punctuation.section.brackets.end.racket
+      pop: true
+    - match: '\('
+      scope: punctuation.section.parens.begin.racket
+      push: param-list-body
+    - match: '\['
+      scope: punctuation.section.brackets.begin.racket
+      push: param-list-body-bracket
+    - match: '{{symbol}}'
+      scope: variable.parameter.racket
+    - include: main
+
+  #############################################################
+  # struct / define-struct NAME (fields...)
+  #############################################################
+  after-struct-name:
+    - match: '\s+'
+    - include: comments
+    - match: '(?=[)\]}])'
+      pop: true
+    - match: '{{symbol}}'
+      scope: entity.name.type.struct.racket
+      set: after-struct-fields
+    - match: '(?=\S)'
+      pop: true
+
+  after-struct-fields:
+    - match: '\s+'
+    - include: comments
+    - match: '(?=[)\]}])'
+      pop: true
+    - match: '\('
+      scope: punctuation.section.parens.begin.racket
+      set: struct-field-list
+    - include: main
+
+  struct-field-list:
+    - meta_scope: meta.parens.racket meta.sexp.racket
+    - match: '\)'
+      scope: punctuation.section.parens.end.racket
+      pop: true
+    - match: '\('
+      scope: punctuation.section.parens.begin.racket
+      push: struct-field-list
+    - match: '{{symbol}}'
+      scope: variable.other.member.racket
+    - include: main
+
+  #############################################################
+  # @-expressions (at-exp / Scribble reader syntax)
+  #############################################################
+  at-expression:
+    - match: '@'
+      scope: punctuation.definition.at-expression.racket
+      push: at-cmd
+
+  at-cmd:
+    - match: ';\{'
+      scope: punctuation.definition.comment.racket
+      set: at-block-comment
+    - match: ';'
+      scope: punctuation.definition.comment.racket
+      set: at-line-comment
+    - match: '"'
+      scope: punctuation.definition.string.begin.racket
+      set: [at-after-cmd, string-body]
+    - match: '\('
+      scope: punctuation.section.parens.begin.racket
+      set: [at-after-cmd, paren-body, list-head-paren]
+    - match: '\|'
+      scope: punctuation.definition.at-cmd.racket
+      set: [at-after-cmd, at-piped-cmd]
+    - match: '(?={{symbol}})'
+      set: [at-after-cmd, at-head]
+    - match: '(?=[\[{])'
+      set: at-after-cmd
+    - match: '(?=.|$)'
+      pop: true
+
+  at-block-comment:
+    - meta_scope: comment.block.at-expression.racket
+    - match: '\{'
+      push: at-block-comment-nested
+    - match: '\}'
+      pop: true
+
+  at-block-comment-nested:
+    - meta_scope: comment.block.at-expression.racket
+    - match: '\{'
+      push: at-block-comment-nested
+    - match: '\}'
+      pop: true
+
+  at-line-comment:
+    - meta_scope: comment.line.at-expression.racket
+    - match: '$'
+      pop: true
+
+  at-piped-cmd:
+    - match: '\|'
+      scope: punctuation.definition.at-cmd.racket
+      pop: true
+    - include: main
+
+  at-head:
+    - include: head-keyword
+    - include: head-operator
+    - include: head-builtin
+    - match: '{{symbol}}'
+      scope: variable.function.at-expression.racket
+      pop: true
+
+  at-after-cmd:
+    - match: '\['
+      scope: punctuation.section.brackets.begin.racket
+      push: at-datum
+    - match: '\{'
+      scope: punctuation.section.braces.begin.at-expression.racket
+      set: at-body
+    - match: '\|([^\sA-Za-z0-9{}|@\\]*)\{'
+      scope: punctuation.section.braces.begin.at-expression.racket
+      set: at-body-alt
+    - match: '(?=.|$)'
+      pop: true
+
+  at-datum:
+    - meta_scope: meta.brackets.racket meta.sexp.racket
+    - match: '\]'
+      scope: punctuation.section.brackets.end.racket
+      pop: true
+    - include: main
+
+  at-body:
+    - meta_scope: meta.at-body.racket
+    - match: '\{'
+      push: at-body-nested
+    - match: '\}'
+      scope: punctuation.section.braces.end.at-expression.racket
+      pop: true
+    - include: at-expression
+
+  at-body-nested:
+    - meta_scope: meta.at-body.racket
+    - match: '\{'
+      push: at-body-nested
+    - match: '\}'
+      pop: true
+    - include: at-expression
+
+  at-body-alt:
+    - meta_scope: meta.at-body.racket
+    - match: '\}[^\sA-Za-z0-9{}|@\\]*\|'
+      scope: punctuation.section.braces.end.at-expression.racket
+      pop: true
+    - match: '\|[^\sA-Za-z0-9{}|@\\]*@'
+      scope: punctuation.definition.at-expression.racket
+      push: at-cmd
+
+  #############################################################
+  # Non-head symbols and misc atoms
+  #############################################################
+  piped-symbol:
+    - match: '\|'
+      scope: punctuation.definition.symbol.racket
+      push: piped-symbol-body
+
+  piped-symbol-body:
+    - meta_scope: variable.other.racket
+    - match: '\\.'
+    - match: '\|'
+      scope: punctuation.definition.symbol.racket
+      pop: true
+
+  non-head-symbol:
+    - match: '{{builtin_vars}}{{sym_boundary}}'
+      scope: support.variable.builtin.racket
+    - match: '{{operators}}{{sym_boundary}}'
+      scope: keyword.operator.racket
+    - match: '{{builtins}}{{sym_boundary}}'
+      scope: support.function.builtin.racket
+    - match: '{{keywords}}{{sym_boundary}}'
+      scope: keyword.control.racket
+    - match: '\.(?=[\s()\[\]{}"'',`;]|$)'
+      scope: keyword.operator.dot.racket
+    - match: '{{symbol}}'
+      scope: variable.other.racket

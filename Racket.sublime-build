@@ -1,5 +1,40 @@
 {
-	"cmd": ["racket", "$file"],
-	"selector": "source.racket",
-	"file_regex": "^(.*?):(\\d+):(\\d+):\\s(.|\\n)+"
+    "target": "exec",
+    "selector": "source.racket",
+    "working_dir": "${file_path}",
+    "file_regex": "^\\s*(?:.*?:\\s+)?((?:(?!: ).)+?\\.(?:rkt|rktl|rktd|scrbl)):(\\d+):(\\d+):?\\s*(.*)$",
+    "env": {"PLT_STDERR": "error"},
+
+    "cmd": ["racket", "${file}"],
+
+    "variants": [
+        {
+            "name": "Run",
+            "cmd": ["racket", "${file}"]
+        },
+        {
+            "name": "Test",
+            "cmd": ["raco", "test", "${file}"]
+        },
+        {
+            "name": "Test Directory",
+            "cmd": ["raco", "test", "${file_path}"]
+        },
+        {
+            "name": "Compile",
+            "cmd": ["raco", "make", "-v", "${file}"]
+        },
+        {
+            "name": "Format",
+            "cmd": ["raco", "fmt", "-i", "${file}"]
+        },
+        {
+            "name": "Expand",
+            "cmd": ["raco", "expand", "${file}"]
+        },
+        {
+            "name": "Check Requires",
+            "cmd": ["raco", "check-requires", "${file}"]
+        }
+    ]
 }

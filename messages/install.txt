@@ -1,0 +1,10 @@
+Racket
+======
+
+Thanks for installing. Racket syntax highlighting is now active for .rkt,
+.rktl and .rktd files, and Scribble highlighting for .scrbl files.
+
+See the README for the full feature list.
+
+Issues and feature requests:
+https://github.com/17451k/sublime-racket/issues
