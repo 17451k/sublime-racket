@@ -27,11 +27,8 @@ the `racket` module of the installed Racket:
 racket tools/gen_syntax.rkt
 ```
 
-Validate the result with:
-
-```sh
-python3 tools/check.py
-```
+Validate the result by running the syntax tests (see above) and checking the
+Sublime console for syntax-loading errors.
 
 ## Scopes used
 
