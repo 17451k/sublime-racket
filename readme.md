@@ -14,8 +14,12 @@ Current features include:
 - symbol indexing: `Goto Symbol` lists defined functions and structs
 - comment settings: `Toggle Comment` uses `;` and `#| |#`
 - bracket handling: auto-indent after an open bracket, outdent on close
+- REPL: `Racket: Open REPL` and `Racket: Run File in REPL` from command palette
+  (needs the [Terminus](https://packagecontrol.io/packages/Terminus) package;
+  set `racket_executable` in the Racket syntax settings if `racket` is not on
+  `PATH`)
 
-No REPL, completion, or language-server integration is available. For those,
+No completion or language-server integration is available. For those,
 use the [LSP](https://packagecontrol.io/packages/LSP) package with
 [racket-langserver](https://github.com/jeapostrophe/racket-langserver).
 

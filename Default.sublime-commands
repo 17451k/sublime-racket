@@ -1,0 +1,4 @@
+[
+    { "caption": "Racket: Open REPL", "command": "racket_open_repl" },
+    { "caption": "Racket: Run File in REPL", "command": "racket_run_in_repl" }
+]
