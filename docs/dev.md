@@ -12,7 +12,7 @@ Clone the repository into the `Packages` directory, or symlink it there.
 | Windows | `%APPDATA%\Sublime Text\Packages`                     |
 
 Sublime picks up edits to `Racket.sublime-syntax` on save. Open
-`syntax_test_racket.rkt` and run Build (`Ctrl/Cmd+B`) to execute the syntax
+`tests/syntax_test_racket.rkt` and run Build (`Ctrl/Cmd+B`) to execute the syntax
 tests.
 
 ## Regenerating the syntax files

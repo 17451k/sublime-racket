@@ -3,5 +3,4 @@
 .gitignore export-ignore
 docs/ export-ignore
 tools/ export-ignore
-syntax_test_racket.rkt export-ignore
-syntax_test_scribble.scrbl export-ignore
+tests/ export-ignore
