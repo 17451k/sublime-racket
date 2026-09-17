@@ -1,1 +1,1 @@
-from .plugin.repl import RacketOpenReplCommand, RacketRunInReplCommand  # noqa: F401
+from .plugin.repl import RacketOpenReplCommand, RacketRunInReplCommand, RacketSendSelectionToReplCommand  # noqa: F401
