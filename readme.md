@@ -15,8 +15,8 @@ Current features include:
 - comment settings: `Toggle Comment` uses `;` and `#| |#`
 - bracket handling: auto-indent after an open bracket, outdent on close
 - REPL: `Racket: Open REPL`, `Racket: Run File in REPL` and
-  `Racket: Send Selection to REPL` from command palette; the last one sends the
-  current line when nothing is selected and starts a REPL if none is running
+  `Racket: Send Selection to REPL` from command palette; send selection sends
+  the current line when nothing is selected and starts a REPL if none is running
   (needs the [Terminus](https://packagecontrol.io/packages/Terminus) package;
   set `racket_executable` in the Racket syntax settings if `racket` is not on
   `PATH`)
