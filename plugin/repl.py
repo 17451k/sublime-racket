@@ -1,74 +1,112 @@
+from __future__ import annotations
+
+import os
+
 import sublime
 import sublime_plugin
 
 from .utils import terminus
 
+REPL_TAG = "racket-repl"
 
-def _open_repl(window, cmd, cwd, focus):
-    terminus.open_terminal(window, cmd, cwd, tag="racket-repl", title="Racket REPL", focus=focus)
+
+def _racket(view: sublime.View | None) -> str:
+    if not view:
+        return "racket"
+    return str(view.settings().get("racket_executable", "racket"))
+
+
+def _is_racket(view: sublime.View | None) -> bool:
+    return bool(view and view.match_selector(0, "source.racket"))
+
+
+def _open_repl(
+    window: sublime.Window, cmd: list[str], cwd: str | None, focus: bool
+) -> bool:
+    return terminus.open_terminal(
+        window, cmd, cwd, tag=REPL_TAG, title="Racket REPL", focus=focus
+    )
 
 
 class RacketOpenReplCommand(sublime_plugin.WindowCommand):
     """Start a fresh Racket REPL in Terminus."""
 
-    def run(self):
-        view = self.window.active_view()
-        if not view:
-            sublime.error_message("No Racket file is open.")
-            return
-
-        racket = view.settings().get("racket_executable", "racket")
+    def run(self) -> None:
+        racket = _racket(self.window.active_view())
         _open_repl(self.window, [racket, "-i"], cwd=None, focus=True)
 
 
 class RacketRunInReplCommand(sublime_plugin.WindowCommand):
-    """Start a fresh Racket REPL in Terminus inside the current file's module."""
+    """Start a fresh REPL in Terminus inside the current file's module."""
 
-    def run(self):
+    def is_enabled(self) -> bool:
+        return _is_racket(self.window.active_view())
+
+    def run(self) -> None:
         view = self.window.active_view()
+
         if not view:
             sublime.error_message("No Racket file is open.")
             return
 
         path = view.file_name()
+
         if not path:
             sublime.error_message("Save the file before running it in the REPL.")
             return
 
         if view.is_dirty():
             view.run_command("save")
+            if view.is_dirty():
+                sublime.error_message("Could not save the file.")
+                return
+
+        cwd = os.path.dirname(path)
 
         # Some modifications potentially useful on Windows, but not tested
         path = path.replace("\\", "/")
-        racket = view.settings().get("racket_executable", "racket")
         enter = '(enter! (file "{}"))'.format(path.replace('"', '\\"'))
-        _open_repl(self.window, [racket, "-i", "-e", enter], cwd=path.rsplit("/", 1)[0], focus=False)
+
+        racket = _racket(view)
+        _open_repl(
+            self.window,
+            [racket, "-i", "-e", enter],
+            cwd=cwd,
+            focus=False,
+        )
 
 
 class RacketSendSelectionToReplCommand(sublime_plugin.WindowCommand):
-    """Send the current selection (or the current line) to the Racket REPL."""
+    """Send each selection, or the line at each empty cursor, to the REPL."""
 
-    def run(self):
+    def is_enabled(self) -> bool:
+        return _is_racket(self.window.active_view())
+
+    def run(self) -> None:
         view = self.window.active_view()
+
         if not view:
-            sublime.error_message("No Racket file is open.")
             return
 
-        if not terminus.is_installed():
-            sublime.error_message("Racket REPL needs the Terminus package.")
-            return
+        regions: list[sublime.Region] = []
+        for sel in view.sel():
+            region = sel if not sel.empty() else view.line(sel.b)
+            if region not in regions:
+                regions.append(region)
 
-        regions = [r if not r.empty() else view.line(r) for r in view.sel()]
         text = "\n".join(view.substr(r) for r in regions).strip()
+
         if not text:
+            sublime.status_message("Nothing to send to the REPL.")
             return
+
         text += "\n"
 
-        if terminus.find_terminal(self.window, "racket-repl"):
-            terminus.send_to_terminal(self.window, text)
+        if terminus.find_terminal(self.window, REPL_TAG):
+            terminus.send_to_terminal(self.window, text, REPL_TAG)
             return
 
         # No live REPL; start one and send once the terminal is up
-        racket = view.settings().get("racket_executable", "racket")
-        _open_repl(self.window, [racket, "-i"], cwd=None, focus=False)
-        terminus.send_when_ready(self.window, text)
+        racket = _racket(view)
+        if _open_repl(self.window, [racket, "-i"], cwd=None, focus=False):
+            terminus.send_when_ready(self.window, text, REPL_TAG)
