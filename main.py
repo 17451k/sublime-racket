@@ -1,1 +1,11 @@
-from .plugin.repl import RacketOpenReplCommand, RacketRunInReplCommand, RacketSendSelectionToReplCommand  # noqa: F401
+from .plugin.repl import (  # ty: ignore[unresolved-import]
+    RacketOpenReplCommand,
+    RacketRunInReplCommand,
+    RacketSendSelectionToReplCommand,
+)
+
+__all__ = [
+    "RacketOpenReplCommand",
+    "RacketRunInReplCommand",
+    "RacketSendSelectionToReplCommand",
+]
