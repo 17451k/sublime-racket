@@ -4,3 +4,6 @@
 docs/ export-ignore
 tools/ export-ignore
 tests/ export-ignore
+.pre-commit-config.yaml export-ignore
+pyproject.toml export-ignore
+uv.lock export-ignore

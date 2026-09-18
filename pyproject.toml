@@ -1,0 +1,19 @@
+[project]
+name = "sublime-racket"
+version = "0.0.0"
+requires-python = ">=3.8"
+
+[tool.ty.analysis]
+allowed-unresolved-imports = ["sublime", "sublime_plugin"]
+
+[tool.ty.environment]
+python-version = "3.8"
+
+[tool.basedpyright]
+include = ["main.py", "plugin"]
+pythonVersion = "3.8"
+# Sublime's bundled API modules; macOS path, used for local editor diagnostics only
+extraPaths = ["/Applications/Sublime Text.app/Contents/MacOS/Lib/python38"]
+reportImplicitOverride = false
+reportUnknownMemberType = false
+reportUnusedCallResult = false
