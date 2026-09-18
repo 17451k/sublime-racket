@@ -11,13 +11,13 @@ Clone the repository into the `Packages` directory, or symlink it there.
 | macOS   | `~/Library/Application Support/Sublime Text/Packages` |
 | Windows | `%APPDATA%\Sublime Text\Packages`                     |
 
-Sublime picks up edits to `Racket.sublime-syntax` on save. Open
+Sublime picks up edits to `resources/Racket.sublime-syntax` on save. Open
 `tests/syntax_test_racket.rkt` and run Build (`Ctrl/Cmd+B`) to execute the syntax
 tests.
 
 ## Regenerating the syntax files
 
-`Racket.sublime-syntax` and `Scribble.sublime-syntax` are generated; never
+`resources/Racket.sublime-syntax` and `resources/Scribble.sublime-syntax` are generated; never
 edit them by hand. The hand-written part is `tools/syntax_template.yaml`;
 the Scribble file is the same syntax with a prose top level. The three identifier lists (special
 forms, builtin procedures, builtin values) are computed from the exports of

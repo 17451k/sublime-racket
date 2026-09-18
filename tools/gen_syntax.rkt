@@ -1,5 +1,5 @@
 #lang racket
-;; Generates ../Racket.sublime-syntax from syntax_template.yaml.
+;; Generates ../resources/Racket.sublime-syntax from syntax_template.yaml.
 ;;
 ;; The template contains three placeholders that are replaced with regex
 ;; alternations of identifiers exported by the `racket` module:
@@ -17,8 +17,8 @@
 (require racket/runtime-path)
 
 (define-runtime-path template-path "syntax_template.yaml")
-(define-runtime-path output-path "../Racket.sublime-syntax")
-(define-runtime-path scribble-output-path "../Scribble.sublime-syntax")
+(define-runtime-path output-path "../resources/Racket.sublime-syntax")
+(define-runtime-path scribble-output-path "../resources/Scribble.sublime-syntax")
 
 ;; ---------------------------------------------------------------------------
 ;; Classifying the exports of `racket`
