@@ -46,7 +46,6 @@ class RacketRunInReplCommand(sublime_plugin.WindowCommand):
         view = self.window.active_view()
 
         if not view:
-            sublime.error_message("No Racket file is open.")
             return
 
         path = view.file_name()
@@ -89,7 +88,7 @@ class RacketSendSelectionToReplCommand(sublime_plugin.WindowCommand):
             return
 
         if len(view.sel()) != 1:
-            sublime.error_message("Cannot send multiple selections to the REPL.")
+            sublime.status_message("Cannot send multiple selections to the REPL.")
             return
 
         sel = view.sel()[0]

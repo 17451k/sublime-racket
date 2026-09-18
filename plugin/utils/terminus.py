@@ -78,4 +78,4 @@ def send_when_ready(
             lambda: send_when_ready(window, text, tag, retries - 1), 100
         )
     else:
-        sublime.status_message("The terminal did not start; nothing was sent.")
+        sublime.error_message("The terminal did not start; nothing was sent.")
