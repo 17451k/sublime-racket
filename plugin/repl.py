@@ -77,7 +77,7 @@ class RacketRunInReplCommand(sublime_plugin.WindowCommand):
 
 
 class RacketSendSelectionToReplCommand(sublime_plugin.WindowCommand):
-    """Send each selection, or the line at each empty cursor, to the REPL."""
+    """Send the selection, or the line at the cursor, to the REPL."""
 
     def is_enabled(self) -> bool:
         return _is_racket(self.window.active_view())
@@ -88,13 +88,12 @@ class RacketSendSelectionToReplCommand(sublime_plugin.WindowCommand):
         if not view:
             return
 
-        regions: list[sublime.Region] = []
-        for sel in view.sel():
-            region = sel if not sel.empty() else view.line(sel.b)
-            if region not in regions:
-                regions.append(region)
+        if len(view.sel()) != 1:
+            sublime.error_message("Cannot send multiple selections to the REPL.")
+            return
 
-        text = "\n".join(view.substr(r) for r in regions).strip()
+        sel = view.sel()[0]
+        text = view.substr(sel if not sel.empty() else view.line(sel.b)).strip()
 
         if not text:
             sublime.status_message("Nothing to send to the REPL.")
