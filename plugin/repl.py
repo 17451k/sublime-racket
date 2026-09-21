@@ -5,7 +5,7 @@ import os
 import sublime
 import sublime_plugin
 
-from .utils import terminus
+from .utils import sexp, terminus
 
 REPL_TAG = "racket-repl"
 
@@ -26,6 +26,26 @@ def _open_repl(
     return terminus.open_terminal(
         window, cmd, cwd, tag=REPL_TAG, title="Racket REPL", focus=focus
     )
+
+
+def _send_to_repl(window: sublime.Window, view: sublime.View, text: str) -> None:
+    """Send text to the live REPL, starting one when needed."""
+    text = text.strip()
+
+    if not text:
+        sublime.status_message("Nothing to send to the REPL.")
+        return
+
+    text += "\n"
+
+    if terminus.find_terminal(window, REPL_TAG):
+        terminus.send_to_terminal(window, text, REPL_TAG)
+        return
+
+    # No live REPL; start one and send once the terminal is up
+    racket = _racket(view)
+    if _open_repl(window, [racket, "-i"], cwd=None, focus=False):
+        terminus.send_when_ready(window, text, REPL_TAG)
 
 
 class RacketOpenReplCommand(sublime_plugin.WindowCommand):
@@ -92,19 +112,31 @@ class RacketSendSelectionToReplCommand(sublime_plugin.WindowCommand):
             return
 
         sel = view.sel()[0]
-        text = view.substr(sel if not sel.empty() else view.line(sel.b)).strip()
+        _send_to_repl(
+            self.window, view, view.substr(sel if not sel.empty() else view.line(sel.b))
+        )
 
-        if not text:
-            sublime.status_message("Nothing to send to the REPL.")
+
+class RacketSendDefinitionToReplCommand(sublime_plugin.WindowCommand):
+    """Send the top-level form at the cursor to the REPL."""
+
+    def is_enabled(self) -> bool:
+        return _is_racket(self.window.active_view())
+
+    def run(self) -> None:
+        view = self.window.active_view()
+
+        if not view:
             return
 
-        text += "\n"
-
-        if terminus.find_terminal(self.window, REPL_TAG):
-            terminus.send_to_terminal(self.window, text, REPL_TAG)
+        if len(view.sel()) != 1:
+            sublime.status_message("Cannot send multiple selections to the REPL.")
             return
 
-        # No live REPL; start one and send once the terminal is up
-        racket = _racket(view)
-        if _open_repl(self.window, [racket, "-i"], cwd=None, focus=False):
-            terminus.send_when_ready(self.window, text, REPL_TAG)
+        form = sexp.toplevel_form(view, view.sel()[0].b)
+
+        if form is None:
+            sublime.status_message("No top-level form at cursor.")
+            return
+
+        _send_to_repl(self.window, view, view.substr(form))

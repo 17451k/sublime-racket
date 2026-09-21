@@ -14,10 +14,12 @@ Current features include:
 - symbol indexing: `Goto Symbol` lists defined functions and structs
 - comment settings: `Toggle Comment` uses `;` and `#| |#`
 - bracket handling: auto-indent after an open bracket, outdent on close
-- REPL: `Racket: Open REPL`, `Racket: Run File in REPL` and
-  `Racket: Send Selection to REPL` from command palette; send selection sends
-  the current line when nothing is selected and starts a REPL if none is running
-  (needs the [Terminus](https://packagecontrol.io/packages/Terminus) package;
+- REPL: `Racket: Open REPL`, `Racket: Run File in REPL`,
+  `Racket: Send Selection to REPL` and `Racket: Send Definition to REPL` from
+  command palette; send selection sends the current line when nothing is
+  selected, send definition sends the top-level form at the cursor, where forms
+  inside `module`, `module*` and `module+` count as top-level; both start a REPL
+  if none is running (needs the [Terminus](https://packagecontrol.io/packages/Terminus) package;
   set `racket_executable` in the Racket syntax settings if `racket` is not on
   `PATH`)
 

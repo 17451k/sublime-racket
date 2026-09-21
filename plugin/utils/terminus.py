@@ -1,7 +1,12 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import sublime
 import sublime_plugin
+
+if TYPE_CHECKING:
+    from sublime_types import CommandArgs
 
 
 def _available() -> bool:
@@ -26,17 +31,15 @@ def open_terminal(
         return False
 
     # terminus_open kills the terminal already holding the tag and reuses its view.
-    window.run_command(
-        "terminus_open",
-        {
-            "cmd": cmd,
-            "cwd": cwd,
-            "tag": tag,
-            "title": title,
-            "auto_close": False,
-            "focus": focus,
-        },
-    )
+    args: CommandArgs = {
+        "cmd": [*cmd],
+        "cwd": cwd,
+        "tag": tag,
+        "title": title,
+        "auto_close": False,
+        "focus": focus,
+    }
+    window.run_command("terminus_open", args)
     return True
 
 
