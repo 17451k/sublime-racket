@@ -4,7 +4,7 @@ version = "0.0.0"
 requires-python = ">=3.8"
 
 [tool.ty.analysis]
-allowed-unresolved-imports = ["sublime", "sublime_plugin"]
+allowed-unresolved-imports = ["sublime", "sublime_plugin", "sublime_types"]
 
 [tool.ty.environment]
 python-version = "3.8"
@@ -13,7 +13,10 @@ python-version = "3.8"
 include = ["main.py", "plugin"]
 pythonVersion = "3.8"
 # Sublime's bundled API modules; macOS path, used for local editor diagnostics only
-extraPaths = ["/Applications/Sublime Text.app/Contents/MacOS/Lib/python38"]
+extraPaths = ["/Applications/Sublime Text.app/Contents/MacOS/Lib/python314"]
 reportImplicitOverride = false
+reportIncompatibleMethodOverride = false
+reportUnknownArgumentType = false
 reportUnknownMemberType = false
+reportUnknownVariableType = false
 reportUnusedCallResult = false
