@@ -1,0 +1,26 @@
+Racket 2.1.0
+============
+
+REPL integration, running in a Terminus terminal (install the Terminus
+package first). All commands are in the command palette:
+
+  - Racket: Open REPL starts a fresh `racket -i` session.
+  - Racket: Run File in REPL saves the current file and starts a REPL inside
+    its module.
+  - Racket: Send Selection to REPL sends the selection, or the current line
+    when nothing is selected.
+  - Racket: Send Definition to REPL sends the top-level form at the cursor;
+    forms inside module, module* and module+ count as top-level.
+  - Racket: Send S-Expression to REPL sends the innermost form at the cursor,
+    including any reader prefix such as ' or #'.
+
+The send commands start a REPL if none is running. Set `racket_executable`
+in the Racket syntax settings if racket is not on PATH.
+
+Other changes:
+
+  - The readme has a recommended setup section with a ready LSP settings
+    snippet: https://github.com/17451k/sublime-racket#readme
+
+Found a bug? Please submit an issue or a feature request:
+https://github.com/17451k/sublime-racket/issues
