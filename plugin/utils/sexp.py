@@ -101,3 +101,28 @@ def toplevel_form(view: sublime.View, pt: int) -> sublime.Region | None:
         form = child
 
     return _with_prefix(view, form)
+
+
+def innermost_form(view: sublime.View, pt: int) -> sublime.Region | None:
+    """Return the innermost balanced form containing pt, with reader prefixes."""
+    outer = _pick(view.find_by_selector("meta.sexp.racket"), pt)
+
+    if outer is None:
+        return None
+
+    stack: list[int] = []
+
+    for delims in view.find_by_selector(_DELIMS):
+        # Adjacent delimiters are merged into one region, so scan every point
+        part = delims.intersection(outer)
+
+        for p in range(part.begin(), part.end()):
+            if view.match_selector(p, _OPEN):
+                stack.append(p)
+            elif view.match_selector(p, _CLOSE) and stack:
+                start = stack.pop()
+                # Inner forms close first, so the first match is innermost
+                if start <= pt <= p + 1:
+                    return _with_prefix(view, sublime.Region(start, p + 1))
+
+    return None

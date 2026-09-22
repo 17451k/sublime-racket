@@ -2,5 +2,6 @@
     { "caption": "Racket: Open REPL", "command": "racket_open_repl" },
     { "caption": "Racket: Run File in REPL", "command": "racket_run_in_repl" },
     { "caption": "Racket: Send Selection to REPL", "command": "racket_send_selection_to_repl" },
-    { "caption": "Racket: Send Definition to REPL", "command": "racket_send_definition_to_repl" }
+    { "caption": "Racket: Send Definition to REPL", "command": "racket_send_definition_to_repl" },
+    { "caption": "Racket: Send S-Expression to REPL", "command": "racket_send_sexp_to_repl" }
 ]

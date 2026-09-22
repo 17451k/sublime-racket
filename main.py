@@ -3,6 +3,7 @@ from .plugin.repl import (  # ty: ignore[unresolved-import]
     RacketRunInReplCommand,
     RacketSendDefinitionToReplCommand,
     RacketSendSelectionToReplCommand,
+    RacketSendSexpToReplCommand,
 )
 
 __all__ = [
@@ -10,4 +11,5 @@ __all__ = [
     "RacketRunInReplCommand",
     "RacketSendDefinitionToReplCommand",
     "RacketSendSelectionToReplCommand",
+    "RacketSendSexpToReplCommand",
 ]

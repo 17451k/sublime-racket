@@ -140,3 +140,28 @@ class RacketSendDefinitionToReplCommand(sublime_plugin.WindowCommand):
             return
 
         _send_to_repl(self.window, view, view.substr(form))
+
+
+class RacketSendSexpToReplCommand(sublime_plugin.WindowCommand):
+    """Send the innermost form at the cursor to the REPL."""
+
+    def is_enabled(self) -> bool:
+        return _is_racket(self.window.active_view())
+
+    def run(self) -> None:
+        view = self.window.active_view()
+
+        if not view:
+            return
+
+        if len(view.sel()) != 1:
+            sublime.status_message("Cannot send multiple selections to the REPL.")
+            return
+
+        form = sexp.innermost_form(view, view.sel()[0].b)
+
+        if form is None:
+            sublime.status_message("No s-expression at cursor.")
+            return
+
+        _send_to_repl(self.window, view, view.substr(form))
