@@ -13,7 +13,10 @@ variables:
   symbol: '[^\s()\[\]{}"'',`;|\\]+'
   sym_boundary: '(?=[\s()\[\]{}"'',`;]|$)'
   keywords: '__FORM_LIST__'
-  builtins: '__PROCEDURE_LIST__'
+  builtins_1: '__PROCEDURE_LIST_1__'
+  builtins_2: '__PROCEDURE_LIST_2__'
+  builtins_3: '__PROCEDURE_LIST_3__'
+  builtins_4: '__PROCEDURE_LIST_4__'
   builtin_vars: '__VALUE_LIST__'
   operators: '(?:\+|-|\*|/|=|<=|>=|<|>)'
 
@@ -423,7 +426,16 @@ contexts:
       pop: true
 
   head-builtin:
-    - match: '{{builtins}}{{sym_boundary}}'
+    - match: '{{builtins_1}}{{sym_boundary}}'
+      scope: support.function.builtin.racket
+      pop: true
+    - match: '{{builtins_2}}{{sym_boundary}}'
+      scope: support.function.builtin.racket
+      pop: true
+    - match: '{{builtins_3}}{{sym_boundary}}'
+      scope: support.function.builtin.racket
+      pop: true
+    - match: '{{builtins_4}}{{sym_boundary}}'
       scope: support.function.builtin.racket
       pop: true
 
@@ -710,7 +722,13 @@ contexts:
       scope: support.variable.builtin.racket
     - match: '{{operators}}{{sym_boundary}}'
       scope: keyword.operator.racket
-    - match: '{{builtins}}{{sym_boundary}}'
+    - match: '{{builtins_1}}{{sym_boundary}}'
+      scope: support.function.builtin.racket
+    - match: '{{builtins_2}}{{sym_boundary}}'
+      scope: support.function.builtin.racket
+    - match: '{{builtins_3}}{{sym_boundary}}'
+      scope: support.function.builtin.racket
+    - match: '{{builtins_4}}{{sym_boundary}}'
       scope: support.function.builtin.racket
     - match: '{{keywords}}{{sym_boundary}}'
       scope: keyword.control.racket

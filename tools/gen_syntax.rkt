@@ -1,12 +1,13 @@
 #lang racket
 ;; Generates ../resources/Racket.sublime-syntax from syntax_template.yaml.
 ;;
-;; The template contains three placeholders that are replaced with regex
+;; The template contains placeholders that are replaced with regex
 ;; alternations of identifiers exported by the `racket` module:
 ;;
-;;   __FORM_LIST__       syntactic forms (macros, core forms)
-;;   __PROCEDURE_LIST__  identifiers bound to procedures
-;;   __VALUE_LIST__      identifiers bound to non-procedure values
+;;   __FORM_LIST__         syntactic forms (macros, core forms)
+;;   __PROCEDURE_LIST_n__  identifiers bound to procedures, split into
+;;                         procedure-chunks alternations (n counts from 1)
+;;   __VALUE_LIST__        identifiers bound to non-procedure values
 ;;
 ;; Scribble.sublime-syntax is derived from the same rendered text: the header
 ;; is swapped, `main` becomes `racket-main`, and a new `main` treats the file
@@ -59,13 +60,35 @@
 
 ;; Longest first so that the alternation prefers the longest match; ties
 ;; broken alphabetically so the output is deterministic.
-(define (alternation names)
-  (define strings
-    (sort (set-map names symbol->string)
-          (λ (a b)
-            (or (> (string-length a) (string-length b))
-                (and (= (string-length a) (string-length b)) (string<? a b))))))
+(define (sorted-strings names)
+  (sort (set-map names symbol->string)
+        (λ (a b)
+          (or (> (string-length a) (string-length b))
+              (and (= (string-length a) (string-length b)) (string<? a b))))))
+
+(define (alternation strings)
   (string-append "(?:" (string-join (map regex-quote strings) "|") ")"))
+
+;; Sublime's new regex engine rejects an alternation of roughly 1000 or more
+;; names, so the procedures are spread over several variables.
+(define procedure-chunks 4)
+(define max-chunk-size 800)
+
+;; Split lst into n consecutive parts of nearly equal length.
+(define (split-evenly lst n)
+  (define len (length lst))
+  (for/list ([i (in-range n)])
+    (define start (quotient (* i len) n))
+    (define end (quotient (* (add1 i) len) n))
+    (take (drop lst start) (- end start))))
+
+(define (procedure-placeholders procedures)
+  (define chunks (split-evenly (sorted-strings procedures) procedure-chunks))
+  (when (> (apply max (map length chunks)) max-chunk-size)
+    (error 'gen_syntax "too many procedures; raise procedure-chunks and update the template"))
+  (for/list ([chunk (in-list chunks)]
+             [n (in-naturals 1)])
+    (cons (format "__PROCEDURE_LIST_~a__" n) (alternation chunk))))
 
 (define generated-note
   (string-append
@@ -80,10 +103,11 @@
 
 (define (render template forms procedures values)
   (for/fold ([text (with-generated-note template)])
-            ([(placeholder names) (in-dict (list (cons "__FORM_LIST__" forms)
-                                                 (cons "__PROCEDURE_LIST__" procedures)
-                                                 (cons "__VALUE_LIST__" values)))])
-    (string-replace text placeholder (alternation names))))
+            ([(placeholder regex)
+              (in-dict (list* (cons "__FORM_LIST__" (alternation (sorted-strings forms)))
+                              (cons "__VALUE_LIST__" (alternation (sorted-strings values)))
+                              (procedure-placeholders procedures)))])
+    (string-replace text placeholder regex)))
 
 (define racket-header
   "name: Racket\nscope: source.racket\nversion: 2\nfile_extensions:\n  - rkt\n  - rktl\n  - rktd\nfirst_line_match: '^#lang\\b'\n")
