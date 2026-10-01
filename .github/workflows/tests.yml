@@ -12,3 +12,11 @@ jobs:
           sublime-text-version: 4
       - uses: SublimeText/UnitTesting/actions/run-syntax-tests@v1
       - uses: SublimeText/UnitTesting/actions/run-tests@v1
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v10.2.0
+      # Runs the ruff check, ruff format and ty hooks from .pre-commit-config.yaml
+      - run: uvx pre-commit run --all-files --show-diff-on-failure
