@@ -21,11 +21,13 @@ Via Package Control: `Package Control: Install Package`, then choose
 
 ### Recommended setup
 
-- [Terminus](https://packagecontrol.io/packages/Terminus): required by the
+- [Terminus](https://packages.sublimetext.io/packages/Terminus): required by the
   REPL commands
-- [LSP](https://packagecontrol.io/packages/LSP) with
+- [Parinfer](https://packages.sublimetext.io/packages/Parinfer): automatic
+  management of parentheses based on code identation
+- [LSP](https://packages.sublimetext.io/packages/LSP) with
   [racket-langserver](https://github.com/jeapostrophe/racket-langserver):
-  completion, diagnostics, go to definition and hover docs.
+  completion, diagnostics, go to definition and hover docs
 
 Install the server with `raco pkg install racket-langserver`, then register it in `Preferences > Package Settings > LSP > Settings`:
 
