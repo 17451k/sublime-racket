@@ -80,3 +80,10 @@ palette:
 
 The send commands start a REPL if none is running. Set `racket_executable` in
 the Racket syntax settings if `racket` is not on `PATH`.
+
+## Documentation lookup
+
+**Racket: Look Up Documentation** in the command palette searches the
+installed Racket documentation (`raco docs`) for the selection, or for the
+identifier at the cursor when nothing is selected, and opens the result in
+the browser. It runs `racket` from the `racket_executable` setting.

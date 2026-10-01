@@ -1,3 +1,4 @@
+from .plugin.docs import RacketLookUpDocsCommand  # ty: ignore[unresolved-import]
 from .plugin.repl import (  # ty: ignore[unresolved-import]
     RacketOpenReplCommand,
     RacketRunInReplCommand,
@@ -7,6 +8,7 @@ from .plugin.repl import (  # ty: ignore[unresolved-import]
 )
 
 __all__ = [
+    "RacketLookUpDocsCommand",
     "RacketOpenReplCommand",
     "RacketRunInReplCommand",
     "RacketSendDefinitionToReplCommand",

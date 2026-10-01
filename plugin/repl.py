@@ -5,24 +5,9 @@ import os
 import sublime
 import sublime_plugin
 
-from .utils import sexp, terminus
+from .utils import racket, sexp, terminus
 
 REPL_TAG = "racket-repl"
-
-
-def _is_racket(view: sublime.View | None) -> bool:
-    return bool(view and view.match_selector(0, "source.racket"))
-
-
-def _racket(view: sublime.View | None) -> str:
-    """Return the racket executable from the Racket syntax settings."""
-    # A non-Racket view carries no syntax-specific settings; read the file directly
-    settings = (
-        view.settings()
-        if view and _is_racket(view)
-        else sublime.load_settings("Racket.sublime-settings")
-    )
-    return str(settings.get("racket_executable", "racket"))
 
 
 def _open_repl(
@@ -48,8 +33,8 @@ def _send_to_repl(window: sublime.Window, view: sublime.View, text: str) -> None
         return
 
     # No live REPL; start one and send once the terminal is up
-    racket = _racket(view)
-    if _open_repl(window, [racket, "-i"], cwd=None, focus=False):
+    exe = racket.executable(view)
+    if _open_repl(window, [exe, "-i"], cwd=None, focus=False):
         terminus.send_when_ready(window, text, REPL_TAG)
 
 
@@ -57,15 +42,15 @@ class RacketOpenReplCommand(sublime_plugin.WindowCommand):
     """Start a fresh Racket REPL in Terminus."""
 
     def run(self) -> None:
-        racket = _racket(self.window.active_view())
-        _open_repl(self.window, [racket, "-i"], cwd=None, focus=True)
+        exe = racket.executable(self.window.active_view())
+        _open_repl(self.window, [exe, "-i"], cwd=None, focus=True)
 
 
 class RacketRunInReplCommand(sublime_plugin.WindowCommand):
     """Start a fresh REPL in Terminus inside the current file's module."""
 
     def is_enabled(self) -> bool:
-        return _is_racket(self.window.active_view())
+        return racket.is_racket(self.window.active_view())
 
     def run(self) -> None:
         view = self.window.active_view()
@@ -91,10 +76,10 @@ class RacketRunInReplCommand(sublime_plugin.WindowCommand):
         path = path.replace("\\", "/")
         enter = '(enter! (file "{}"))'.format(path.replace('"', '\\"'))
 
-        racket = _racket(view)
+        exe = racket.executable(view)
         _open_repl(
             self.window,
-            [racket, "-i", "-e", enter],
+            [exe, "-i", "-e", enter],
             cwd=cwd,
             focus=False,
         )
@@ -104,7 +89,7 @@ class RacketSendSelectionToReplCommand(sublime_plugin.WindowCommand):
     """Send the selection, or the line at the cursor, to the REPL."""
 
     def is_enabled(self) -> bool:
-        return _is_racket(self.window.active_view())
+        return racket.is_racket(self.window.active_view())
 
     def run(self) -> None:
         view = self.window.active_view()
@@ -126,7 +111,7 @@ class RacketSendDefinitionToReplCommand(sublime_plugin.WindowCommand):
     """Send the top-level form at the cursor to the REPL."""
 
     def is_enabled(self) -> bool:
-        return _is_racket(self.window.active_view())
+        return racket.is_racket(self.window.active_view())
 
     def run(self) -> None:
         view = self.window.active_view()
@@ -151,7 +136,7 @@ class RacketSendSexpToReplCommand(sublime_plugin.WindowCommand):
     """Send the innermost form at the cursor to the REPL."""
 
     def is_enabled(self) -> bool:
-        return _is_racket(self.window.active_view())
+        return racket.is_racket(self.window.active_view())
 
     def run(self) -> None:
         view = self.window.active_view()

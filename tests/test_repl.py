@@ -76,22 +76,6 @@ class ReplTestCase(unittesting.DeferrableTestCase):
         self.status_message.assert_called_once()
 
 
-class TestHelpers(ReplTestCase):
-    def test_is_racket(self) -> None:
-        self.assertTrue(repl._is_racket(self.view))
-        self.assertFalse(repl._is_racket(None))
-        self.assertFalse(repl._is_racket(self.plain_view()))
-
-    def test_racket(self) -> None:
-        self.assertEqual(repl._racket(self.view), "racket")
-        self.assertEqual(repl._racket(self.plain_view()), "racket")
-        self.assertEqual(repl._racket(None), "racket")
-
-    def test_racket_setting(self) -> None:
-        self.view.settings().set("racket_executable", "/opt/racket/bin/racket")
-        self.assertEqual(repl._racket(self.view), "/opt/racket/bin/racket")
-
-
 class TestIsEnabled(ReplTestCase):
     COMMANDS = (
         repl.RacketRunInReplCommand,

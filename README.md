@@ -11,6 +11,8 @@ Current features include:
 - bracket handling: auto-indent after an open bracket, outdent on close
 - REPL: open a Racket REPL in Terminus and send a file, selection, definition
   or s-expression to it from command palette
+- documentation lookup: search the Racket docs for the identifier at the cursor
+  from command palette
 
 <img src="docs/example.png" width="956" alt="Racket source highlighted by this package, using the Monokai Pro Light colour scheme">
 
