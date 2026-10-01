@@ -4,7 +4,7 @@ version = "0.0.0"
 requires-python = ">=3.8"
 
 [tool.ty.analysis]
-allowed-unresolved-imports = ["sublime", "sublime_plugin", "sublime_types"]
+allowed-unresolved-imports = ["sublime", "sublime_plugin", "sublime_types", "unittesting"]
 
 [tool.ty.environment]
 python-version = "3.8"
