@@ -11,9 +11,37 @@ Clone the repository into the `Packages` directory, or symlink it there.
 | macOS   | `~/Library/Application Support/Sublime Text/Packages` |
 | Windows | `%APPDATA%\Sublime Text\Packages`                     |
 
-Sublime picks up edits to `resources/Racket.sublime-syntax` on save. Open
-`tests/syntax_test_racket.rkt` and run Build (`Ctrl/Cmd+B`) to execute the syntax
-tests.
+Sublime picks up edits to `resources/Racket.sublime-syntax` on save.
+
+## Running the tests
+
+The `tests` directory holds three kinds of checks. GitHub Actions runs all of
+them on Sublime Text 4 for every push and pull request
+(`.github/workflows/tests.yml`).
+
+- **Syntax tests** (`tests/syntax_test_*`): open a syntax test file and run
+  Build (`Ctrl/Cmd+B`).
+- **Regex compatibility**: open `resources/Racket.sublime-syntax` or
+  `resources/Scribble.sublime-syntax` and run
+  `Tools > Build With… > Syntax Tests - Regex Compatibility`. The check reports
+  patterns that Sublime's new regex engine can't handle.
+- **Unit tests** (`tests/test_*.py`): install the
+  [UnitTesting](https://github.com/SublimeText/UnitTesting) package with
+  Package Control. Run `UnitTesting: Test Package` from the command palette and
+  enter the name of the package directory, for example `sublime-racket`. To run
+  one file, enter `sublime-racket:test_sexp.py`.
+
+The unit tests mock Terminus and never start `racket`, so they need neither.
+They open and close scratch tabs in the active window while they run.
+
+To run the tests from a terminal, pass an `output` file to the UnitTesting
+commands and read the results from it:
+
+```sh
+subl --command 'unit_testing {"package": "sublime-racket", "output": "/tmp/unit.txt"}'
+subl --command 'unit_testing_syntax {"package": "sublime-racket", "output": "/tmp/syntax.txt"}'
+subl --command 'unit_testing_syntax_compatibility {"package": "sublime-racket", "output": "/tmp/compat.txt"}'
+```
 
 ## Regenerating the syntax files
 
@@ -27,8 +55,8 @@ the `racket` module of the installed Racket:
 racket tools/gen_syntax.rkt
 ```
 
-Validate the result by running the syntax tests (see above) and checking the
-Sublime console for syntax-loading errors.
+Validate the result by running the syntax tests and the regex compatibility
+check (see above) and checking the Sublime console for syntax-loading errors.
 
 ## Scopes used
 
