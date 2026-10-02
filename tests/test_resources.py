@@ -151,13 +151,16 @@ class TestCommandPalette(TestCase):
         # Command.name() derives the command name from the class name
         registered = {
             cls(window).name() for cls in sublime_plugin.window_command_classes
-        }
+        } | {cls().name() for cls in sublime_plugin.application_command_classes}
         for item in self.items:
             self.assertIn(item["command"], registered)
 
     def test_captions(self):
         for item in self.items:
-            self.assertTrue(item["caption"].startswith("Racket: "), item["caption"])
+            self.assertTrue(
+                item["caption"].startswith(("Racket: ", "Preferences: ")),
+                item["caption"],
+            )
 
 
 class TestMenu(TestCase):

@@ -43,8 +43,9 @@ Known limitations can be found in the [dev docs](./dev.md).
 
 ## Settings
 
-`Preferences > Package Settings > Sublime Racket` opens the package settings
-next to your Racket syntax settings.
+`Preferences > Package Settings > Sublime Racket`, or
+**Preferences: Sublime Racket Settings** in the command palette, opens the
+package settings next to your Racket syntax settings.
 
 ## Indentation
 
