@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from bisect import bisect_left
 
 import sublime
 
@@ -126,3 +127,162 @@ def innermost_form(view: sublime.View, pt: int) -> sublime.Region | None:
                     return _with_prefix(view, sublime.Region(start, p + 1))
 
     return None
+
+
+_HEAD = re.compile(r"\s*([^\s()\[\]{}\"',`;]+)")
+_ATOM = re.compile(r"[^\s()\[\]{}]+")
+# Characters and strings (group 1), and line and block comments
+_OPAQUE = re.compile(r'(#\\.|"(?:\\.|[^"\\])*")|;[^\n]*|#\|.*?\|#', re.DOTALL)
+
+# Clause forms and the number of elements after the head before clauses start
+_CLAUSES = {
+    "cond": 0,
+    "case": 1,
+    "match": 1,
+    "match*": 1,
+    "syntax-case": 2,
+    "syntax-parse": 1,
+    "syntax-rules": 1,
+}
+# let, let*, letrec, let-values, match-let, ...; not delete
+_LET = re.compile(r"(?:^|-)let")
+_LET_LIKE = {
+    "parameterize",
+    "parameterize*",
+    "with-handlers",
+    "with-handlers*",
+    "with-syntax",
+    "with-syntax*",
+}
+_FOR = re.compile(r"for\*?(?:/.+)?")
+# for forms with an accumulator list before the clauses
+_ACCUMULATORS = {
+    "for/fold",
+    "for*/fold",
+    "for/foldr",
+    "for*/foldr",
+    "for/lists",
+    "for*/lists",
+}
+_CLASS_CLAUSES = {"init", "init-field", "field", "inherit", "inherit-field"}
+
+
+def enclosing_open(view: sublime.View, pt: int) -> int | None:
+    """Return the point of the innermost opener that is unclosed at pt."""
+    regions = view.find_by_selector(_DELIMS)
+    depth = 0
+
+    # Walk backwards from the last region that starts before pt
+    for i in range(bisect_left([r.begin() for r in regions], pt) - 1, -1, -1):
+        region = regions[i]
+        for p in range(min(region.end(), pt) - 1, region.begin() - 1, -1):
+            char = view.substr(p)
+            if char in ")]}":
+                depth += 1
+            elif char in "([{":
+                if depth == 0:
+                    return p
+                depth -= 1
+
+    return None
+
+
+def indent_point(view: sublime.View, pt: int) -> int:
+    """Return the point whose context the indentation at pt implies.
+
+    On a whitespace-only line, this is the first trailing closer of the
+    previous code line whose opener is left of pt's column.
+    """
+    line = view.line(pt)
+    if view.substr(line).strip():
+        return pt
+    col = pt - line.begin()
+    if col == 0:
+        return pt
+
+    end = line.begin()
+    while end > 0 and (
+        view.substr(end - 1).isspace() or view.match_selector(end - 1, "comment")
+    ):
+        end -= 1
+    begin = end
+    while begin > 0 and view.match_selector(begin - 1, _CLOSE):
+        begin -= 1
+
+    for p in range(begin, end):
+        opener = enclosing_open(view, p)
+        if opener is None:
+            return pt
+        if opener - view.line(opener).begin() < col:
+            return p
+    return pt
+
+
+def _head(view: sublime.View, opener: int) -> str | None:
+    """Return the symbol right after opener, if the first element is one."""
+    text = view.substr(sublime.Region(opener + 1, min(view.size(), opener + 80)))
+    m = _HEAD.match(text)
+    return m.group(1) if m else None
+
+
+def _elements(view: sublime.View, begin: int, end: int) -> tuple[list[str], int]:
+    """Return the atoms and the number of forms at depth 0 between begin and end."""
+    forms = [_with_prefix(view, f) for f in _forms(view, sublime.Region(begin, end))]
+    text = view.substr(sublime.Region(begin, end))
+    for form in reversed(forms):
+        a = max(form.begin(), begin) - begin
+        b = form.end() - begin
+        text = text[:a] + " " + text[b:]
+    # A character or a string is one atom; a comment is none
+    text = _OPAQUE.sub(lambda m: "x" if m.group(1) else " ", text)
+    return _ATOM.findall(text), len(forms)
+
+
+def _count(view: sublime.View, begin: int, end: int) -> int:
+    atoms, forms = _elements(view, begin, end)
+    return len(atoms) + forms
+
+
+def smart_open(view: sublime.View, pt: int) -> str:
+    """Return the opener that fits the context at pt: "(" or "["."""
+    parent = enclosing_open(view, pt)
+
+    if parent is None:
+        return "("
+
+    head = _head(view, parent)
+
+    # Clauses of cond, case, match and similar
+    if head in _CLAUSES and _count(view, parent + 1, pt) - 1 >= _CLAUSES[head]:
+        return "["
+
+    # Follow the previous sibling
+    forms = _forms(view, sublime.Region(parent + 1, pt))
+    if forms:
+        last = forms[-1]
+        if not view.substr(sublime.Region(last.end(), pt)).strip():
+            char = view.substr(last.begin())
+            if char in "([{":
+                return char
+
+    # Binding lists of let- and for-like forms
+    grand = enclosing_open(view, parent)
+    if grand is not None:
+        outer = _head(view, grand) or ""
+        atoms, forms = _elements(view, grand + 1, parent)
+        i = len(atoms) + forms
+        if _LET.search(outer) or outer in _LET_LIKE:
+            # Named let has one atom between the head and the bindings
+            named = outer == "let" and len(atoms) == 2 and forms == 0
+            if i == 1 or named:
+                return "["
+        elif _FOR.fullmatch(outer):
+            # Keyword arguments, such as #:length n, come before the clauses
+            i -= 2 * sum(atom.startswith("#:") for atom in atoms)
+            if i == 1 or (i == 2 and outer in _ACCUMULATORS):
+                return "["
+
+    if head in _CLASS_CLAUSES:
+        return "["
+
+    return "("

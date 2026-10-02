@@ -20,7 +20,7 @@ _STARTERS = ';#@"'
 # Head, distinguished arguments, and keyword pairs before for clauses
 _MAX_ELEMENTS = 8
 
-_FOR = re.compile(r"for\*?(?:/.+)?")
+_FOR = sexp._FOR
 
 _Element = Tuple[int, Optional[str]]
 

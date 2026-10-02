@@ -3,5 +3,8 @@
     // Command used by the REPL commands; set a full path if racket is not on PATH
     "racket_executable": "racket",
     // Indent new lines the way raco fmt does
-    "racket_indent": true
+    "racket_indent": true,
+    // When true, typing [ inserts ( or [ by context, and closers match the
+    // open bracket
+    "racket_smart_brackets": false
 }

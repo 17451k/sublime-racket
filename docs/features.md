@@ -41,6 +41,36 @@ Text 4 engine.
 
 Known limitations can be found in the [dev docs](./dev.md).
 
+## Smart brackets
+
+Smart brackets are off by default. To turn them on, set
+`"racket_smart_brackets": true` in the package settings (see
+[Settings](#settings)).
+
+Typing `[` inserts `[` where Racket style uses square brackets and `(`
+everywhere else. It inserts `[` in these contexts:
+
+- Clauses of `cond`, `case`, `match`, `match*`, `syntax-case`,
+  `syntax-parse`, and `syntax-rules`.
+- Binding lists of `let`-like forms (including named `let`),
+  `parameterize`, `with-handlers`, `with-syntax`, and `for`-like forms,
+  including the accumulators of `for/fold`.
+- Clauses of `init`, `init-field`, `field`, `inherit`, and
+  `inherit-field` in classes.
+- After a sibling written with square brackets.
+- Directly after an atom, for example `#\[` or `@foo[`.
+
+On an empty line, the context follows the indentation: `[` acts as if the
+cursor were inside every form opened to the left of the cursor column. This
+keeps smart brackets working with parinfer, which leaves closing brackets on
+the previous line.
+
+Typing `)`, `]`, or `}` inserts the closer that matches the innermost open
+bracket. Typing `(` always inserts a literal parenthesis.
+
+Smart brackets respect the `auto_match_enabled` setting and are inactive in
+strings, comments, and the text of at-expressions.
+
 ## Settings
 
 `Preferences > Package Settings > Sublime Racket`, or

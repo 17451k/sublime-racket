@@ -1,3 +1,7 @@
+from .plugin.brackets import (  # ty: ignore[unresolved-import]
+    RacketSmartCloseBracketCommand,
+    RacketSmartOpenBracketCommand,
+)
 from .plugin.docs import RacketLookUpDocsCommand  # ty: ignore[unresolved-import]
 from .plugin.indent import (  # ty: ignore[unresolved-import]
     RacketIndentListener,
@@ -22,4 +26,6 @@ __all__ = [
     "RacketSendDefinitionToReplCommand",
     "RacketSendSelectionToReplCommand",
     "RacketSendSexpToReplCommand",
+    "RacketSmartCloseBracketCommand",
+    "RacketSmartOpenBracketCommand",
 ]

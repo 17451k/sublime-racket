@@ -163,6 +163,37 @@ class TestCommandPalette(TestCase):
             )
 
 
+class TestKeymap(TestCase):
+    def setUp(self):
+        self.items = _load("Default.sublime-keymap")
+
+    def test_commands_registered(self):
+        view = sublime.active_window().active_view()
+        registered = {cls(view).name() for cls in sublime_plugin.text_command_classes}
+        for item in self.items:
+            self.assertIn(item["command"], registered)
+
+
+class TestKeymapSelector(ViewTestCase):
+    def setUp(self):
+        self.view.assign_syntax("scope:source.racket")
+
+    def test_at_expression(self):
+        (selector,) = {
+            context["operand"]
+            for item in _load("Default.sublime-keymap")
+            for context in item["context"]
+            if context["key"] == "selector"
+        }
+        text = "@foo{a @bar[b]{c} d}"
+        self.view.run_command("append", {"characters": text})
+        # Inactive in the text of an at-expression, active in code inside it
+        for char, expected in (("@", True), ("a", False), ("b]", True), ("c", False)):
+            with self.subTest(char=char):
+                pt = text.index(char)
+                self.assertEqual(self.view.match_selector(pt, selector), expected)
+
+
 class TestMenu(TestCase):
     def setUp(self):
         (preferences,) = _load("Main.sublime-menu")

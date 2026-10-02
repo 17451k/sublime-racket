@@ -1,0 +1,37 @@
+[
+    {
+        "keys": ["["],
+        "command": "racket_smart_open_bracket",
+        "context": [
+            {"key": "setting.racket_smart_brackets", "operator": "equal", "operand": true},
+            {"key": "selector", "operator": "equal", "operand": "source.racket - string - comment - (meta.at-body - meta.at-body meta.sexp)", "match_all": true}
+        ]
+    },
+    {
+        "keys": [")"],
+        "command": "racket_smart_close_bracket",
+        "args": {"char": ")"},
+        "context": [
+            {"key": "setting.racket_smart_brackets", "operator": "equal", "operand": true},
+            {"key": "selector", "operator": "equal", "operand": "source.racket - string - comment - (meta.at-body - meta.at-body meta.sexp)", "match_all": true}
+        ]
+    },
+    {
+        "keys": ["]"],
+        "command": "racket_smart_close_bracket",
+        "args": {"char": "]"},
+        "context": [
+            {"key": "setting.racket_smart_brackets", "operator": "equal", "operand": true},
+            {"key": "selector", "operator": "equal", "operand": "source.racket - string - comment - (meta.at-body - meta.at-body meta.sexp)", "match_all": true}
+        ]
+    },
+    {
+        "keys": ["}"],
+        "command": "racket_smart_close_bracket",
+        "args": {"char": "}"},
+        "context": [
+            {"key": "setting.racket_smart_brackets", "operator": "equal", "operand": true},
+            {"key": "selector", "operator": "equal", "operand": "source.racket - string - comment - (meta.at-body - meta.at-body meta.sexp)", "match_all": true}
+        ]
+    }
+]
