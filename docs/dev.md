@@ -43,6 +43,16 @@ subl --command 'unit_testing_syntax {"package": "sublime-racket", "output": "/tm
 subl --command 'unit_testing_syntax_compatibility {"package": "sublime-racket", "output": "/tmp/compat.txt"}'
 ```
 
+`tests/fixtures/indent.rkt` is output of `raco fmt --width 40` (install the
+formatter with `raco pkg install fmt`); the indentation tests expect the
+indenter to reproduce it. To check that the fixture is still a fixed point
+of the formatter, run
+`raco fmt --width 40 tests/fixtures/indent.rkt | diff - tests/fixtures/indent.rkt`.
+The indenter's body forms in `plugin/utils/indent.py` (a short table plus
+name patterns for the `define`, `let`, `for`, `parameterize` and `delay`
+families) agree with fmt's `standard-formatter-map` for every form listed
+there.
+
 ## Regenerating the syntax files
 
 `resources/Racket.sublime-syntax` and `resources/Scribble.sublime-syntax` are generated; never

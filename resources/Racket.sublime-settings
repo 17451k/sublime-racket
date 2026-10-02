@@ -1,5 +1,7 @@
 {
     "word_separators": "()[]{}\"',`;",
     // Command used by the REPL commands; set a full path if racket is not on PATH
-    "racket_executable": "racket"
+    "racket_executable": "racket",
+    // Indent new lines the way raco fmt does
+    "racket_indent": true
 }

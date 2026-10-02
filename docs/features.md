@@ -46,6 +46,20 @@ Known limitations can be found in the [dev docs](./dev.md).
 `Preferences > Package Settings > Sublime Racket` opens the package settings
 next to your Racket syntax settings.
 
+## Indentation
+
+Pressing Enter indents the new line the way `raco fmt` would: the body of a
+form such as `define`, `let` or `when` by 2 columns, arguments of a function
+call under its first argument, 1 column when the first argument is on its
+own line, and the contents of `[` and `{` by 1 column. A new line inside a
+multi-line string or block comment isn't indented.
+
+Body forms are the ones `raco fmt` knows in its standard configuration, plus
+any form named like one: `define-…`, `define/…`, `let-…`, `for/…` and
+similar. Any other form is indented like a function call. The package adds
+no key binding. To turn indentation off, set
+`"racket_indent": false` in the package settings.
+
 ## Build system
 
 A build system is included (`Tools > Build With...`):
