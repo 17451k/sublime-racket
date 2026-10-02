@@ -1,10 +1,15 @@
 from __future__ import annotations
 
 import re
+from unittest.mock import patch
 
 import sublime
 import sublime_plugin
 from unittesting import TestCase, ViewTestCase
+
+from ..plugin.settings import (  # ty: ignore[unresolved-import]
+    RacketEditSettingsCommand,
+)
 
 
 def _load(basename: str):
@@ -153,3 +158,29 @@ class TestCommandPalette(TestCase):
     def test_captions(self):
         for item in self.items:
             self.assertTrue(item["caption"].startswith("Racket: "), item["caption"])
+
+
+class TestMenu(TestCase):
+    def setUp(self):
+        (preferences,) = _load("Main.sublime-menu")
+        (self.settings,) = preferences["children"]
+
+    def test_ids(self):
+        # Menus merge into the built-in ones by id
+        self.assertEqual(self.settings["id"], "package-settings")
+
+    def test_item(self):
+        (item,) = self.settings["children"]
+        self.assertEqual(item["caption"], "Sublime Racket")
+        registered = {
+            cls().name() for cls in sublime_plugin.application_command_classes
+        }
+        self.assertIn(item["command"], registered)
+
+    def test_base_file_exists(self):
+        with patch.object(sublime, "run_command") as run:
+            RacketEditSettingsCommand().run()
+        name, args = run.call_args[0]
+        self.assertEqual(name, "edit_settings")
+        path = args["base_file"].replace("${packages}", "Packages")
+        self.assertIn(path, sublime.find_resources("Racket.sublime-settings"))

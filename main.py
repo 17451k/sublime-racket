@@ -6,8 +6,10 @@ from .plugin.repl import (  # ty: ignore[unresolved-import]
     RacketSendSelectionToReplCommand,
     RacketSendSexpToReplCommand,
 )
+from .plugin.settings import RacketEditSettingsCommand  # ty: ignore[unresolved-import]
 
 __all__ = [
+    "RacketEditSettingsCommand",
     "RacketLookUpDocsCommand",
     "RacketOpenReplCommand",
     "RacketRunInReplCommand",

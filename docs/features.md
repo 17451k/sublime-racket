@@ -41,6 +41,11 @@ Text 4 engine.
 
 Known limitations can be found in the [dev docs](./dev.md).
 
+## Settings
+
+`Preferences > Package Settings > Sublime Racket` opens the package settings
+next to your Racket syntax settings.
+
 ## Build system
 
 A build system is included (`Tools > Build With...`):

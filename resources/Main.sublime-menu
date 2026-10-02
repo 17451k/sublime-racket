@@ -1,0 +1,15 @@
+[
+    {
+        "id": "preferences",
+        "children": [
+            {
+                "caption": "Package Settings",
+                "mnemonic": "P",
+                "id": "package-settings",
+                "children": [
+                    { "caption": "Sublime Racket", "command": "racket_edit_settings" }
+                ]
+            }
+        ]
+    }
+]
