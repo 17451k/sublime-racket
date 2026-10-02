@@ -15,4 +15,4 @@ def executable(view: sublime.View | None) -> str:
         if view and is_racket(view)
         else sublime.load_settings("Racket.sublime-settings")
     )
-    return str(settings.get("racket_executable", "racket"))
+    return str(settings.get("racket_executable") or "racket")

@@ -3,25 +3,21 @@ from __future__ import annotations
 import os
 import shutil
 import tempfile
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import sublime
 import unittesting
 
 from ..plugin import repl  # ty: ignore[unresolved-import]
+from .base import ViewMixin
 
 TAG = "racket-repl"
 TITLE = "Racket REPL"
 
 
-class ReplTestCase(unittesting.DeferrableTestCase):
+class ReplTestCase(ViewMixin, unittesting.DeferrableTestCase):
     def setUp(self) -> None:
-        self.window = sublime.active_window()
-        self.previous = self.window.active_view()
-        self.view = self.window.new_file()
-        self.view.set_scratch(True)
-        self.view.assign_syntax("scope:source.racket")
-
+        super().setUp()
         self.open_terminal = self.mock(repl.terminus, "open_terminal")
         self.open_terminal.return_value = True
         self.send_to_terminal = self.mock(repl.terminus, "send_to_terminal")
@@ -30,23 +26,6 @@ class ReplTestCase(unittesting.DeferrableTestCase):
         self.send_when_ready = self.mock(repl.terminus, "send_when_ready")
         self.error_message = self.mock(repl.sublime, "error_message")
         self.status_message = self.mock(repl.sublime, "status_message")
-
-    def tearDown(self) -> None:
-        self.view.close()
-        if self.previous and self.previous.is_valid():
-            self.window.focus_view(self.previous)
-
-    def mock(self, target: object, attr: str) -> Mock:
-        patcher = patch.object(target, attr)
-        self.addCleanup(patcher.stop)
-        return patcher.start()
-
-    def plain_view(self) -> sublime.View:
-        view = self.window.new_file()
-        view.set_scratch(True)
-        view.assign_syntax("scope:text.plain")
-        self.addCleanup(view.close)
-        return view
 
     def set_text(self, marked: str) -> None:
         cursor = max(marked.find("|"), 0)
@@ -90,7 +69,7 @@ class TestIsEnabled(ReplTestCase):
             self.assertTrue(cls(self.window).is_enabled(), cls.__name__)
 
     def test_plain_view(self) -> None:
-        view = self.plain_view()
+        view = self.scratch_view("scope:text.plain")
         self.window.focus_view(view)
         for cls in self.COMMANDS:
             self.assertFalse(cls(self.window).is_enabled(), cls.__name__)
