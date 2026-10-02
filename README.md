@@ -1,4 +1,4 @@
-# Racket
+# Sublime Racket
 
 A Sublime Text 4 plugin for the [Racket](https://racket-lang.org) programming language.
 

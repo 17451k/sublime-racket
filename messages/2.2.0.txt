@@ -1,0 +1,15 @@
+Sublime Racket 2.2.0
+====================
+
+This release adds the following changes:
+
+  - `Racket: Look Up Documentation` command searches for the selection
+    or for the identifier at the cursor using `raco docs` and opens the
+    result in the browser.
+  - The syntax definitions are compatible with Sublime Text's new regex
+    engine.
+  - The Open REPL command now uses the `racket_executable` setting when the
+    active file is not a Racket file.
+
+Found a bug? Please submit an issue or a feature request:
+https://github.com/17451k/sublime-racket/issues
