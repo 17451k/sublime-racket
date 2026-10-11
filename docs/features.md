@@ -41,6 +41,25 @@ Text 4 engine.
 
 Known limitations can be found in the [dev docs](./dev.md).
 
+## Rhombus
+
+`.rhm` files use the Rhombus syntax. It highlights comments (`//`, nested
+`/* */`, `#//` group comments, and `#!` lines), strings and byte
+strings with their escapes, numbers, `#true`, `#false`, `#void`, `#inf`,
+`#neginf`, `#nan`, keywords such as `~width`, operators, brackets, guillemets and
+quotes, separators, `:` blocks and `|` alternatives. Forms and values
+exported by the `rhombus` module are recognised; the lists are generated
+like the Racket ones. Names defined by `fun`, `macro`, `class`, `def` and
+similar forms, and annotations after `::` or `:~`, are scoped as bindings
+and types. Function calls, the parameters of `fun NAME(...)`, the fields
+of `class NAME(...)`, and members after `.` have their own scopes. `#{...}` escapes are highlighted as Racket, and `@`-notation
+text bodies as text.
+
+Indentation, smart brackets, the REPL send commands and documentation
+lookup work in Racket files only. The build system is available for
+Rhombus files; its **Format** variant runs `raco fmt`, which only formats
+Racket, because a build variant can't be limited to some files.
+
 ## Smart brackets
 
 Smart brackets are off by default. To turn them on, set

@@ -35,6 +35,9 @@ class TestSyntaxAssignment(TestCase):
     def test_scribble(self):
         self.assertEqual(self._scope("a.scrbl"), "text.scribble")
 
+    def test_rhombus(self):
+        self.assertEqual(self._scope("a.rhm"), "source.rhombus")
+
 
 class TestEditing(ViewTestCase):
     def setUp(self):
@@ -113,7 +116,7 @@ class TestBuildSystem(TestCase):
             "Check Requires",
         ):
             self.assertIn(name, names)
-        self.assertEqual(self.build["selector"], "source.racket")
+        self.assertEqual(self.build["selector"], "source.racket | source.rhombus")
 
     def test_regex_basic(self):
         m = self.regex.match("foo.rkt:3:5: x: unbound identifier")
@@ -136,6 +139,11 @@ class TestBuildSystem(TestCase):
         m = self.regex.match("manual.scrbl:7:2: bad")
         self.assertIsNotNone(m)
         self.assertEqual(m.group(1), "manual.scrbl")
+
+    def test_regex_rhombus(self):
+        m = self.regex.match("main.rhm:3:5: msg")
+        self.assertIsNotNone(m)
+        self.assertEqual(m.group(1), "main.rhm")
 
     def test_regex_no_match(self):
         self.assertIsNone(self.regex.match("hello world"))

@@ -1,0 +1,196 @@
+// SYNTAX TEST "Rhombus.sublime-syntax"
+
+#lang rhombus
+// <- keyword.control.lang.rhombus
+//    ^^^^^^^ variable.language.lang-name.rhombus
+
+// a line comment
+// <- punctuation.definition.comment.rhombus
+// <- comment.line.double-slash.rhombus
+/* outer /* inner */ still outer */ 1
+// <- punctuation.definition.comment.begin.rhombus
+//       ^^^^^^^^ comment.block.rhombus
+//                   ^^^^^^^^^^^^^^ comment.block.rhombus
+//                                  ^ source.rhombus - comment
+#// def unused = 1
+// <- punctuation.definition.comment.rhombus
+//  ^^^^^^^^^^^^^^ comment.block.group.rhombus
+//  ^^^ comment.block.group.rhombus - keyword.control
+#// [1,
+  2]
+//^^ comment.block.group.rhombus
+def after = 3
+// <- keyword.control.rhombus - comment
+#// x; y
+//  ^ comment.block.group.rhombus
+//   ^ punctuation.separator.rhombus - comment
+//     ^ source.rhombus - comment
+#//
+  def own_line = 1
+//^^^^^^^^^^^^^^^^ comment.block.group.rhombus - keyword.control
+def after_own_line = 2
+// <- keyword.control.rhombus - comment
+#! /usr/bin/env racket
+// <- comment.line.number-sign.rhombus
+
+def greeting = "hi\n\x41\u03BB\U01F600"
+// <- keyword.control.rhombus
+//  ^^^^^^^^ variable.other.definition.rhombus
+//             ^ punctuation.definition.string.begin.rhombus
+//             ^^^^^^^^^^^^^^^^^^^^^^^^ string.quoted.double.rhombus
+//                ^^ constant.character.escape.rhombus
+//                  ^^^^ constant.character.escape.rhombus
+//                      ^^^^^^ constant.character.escape.rhombus
+//                            ^^^^^^^^ constant.character.escape.rhombus
+def bytes = #"raw\t"
+//          ^^^^^^^^ string.quoted.double.byte.rhombus
+//               ^^ constant.character.escape.rhombus
+
+def nums = [1, -2, 3.5, 1.5e3, 0xff_ff, 0o17, 0b1_0, 1/2, .5, 1_000]
+//          ^ constant.numeric.rhombus
+//             ^ keyword.operator.rhombus
+//              ^ constant.numeric.rhombus
+//                 ^^^ constant.numeric.rhombus
+//                      ^^^^^ constant.numeric.rhombus
+//                             ^^^^^^^ constant.numeric.rhombus
+//                                      ^^^^ constant.numeric.rhombus
+//                                            ^^^^^ constant.numeric.rhombus
+//                                                   ^^^ constant.numeric.rhombus
+//                                                        ^ keyword.operator.rhombus
+//                                                         ^ constant.numeric.rhombus
+//                                                            ^^^^^ constant.numeric.rhombus
+//         ^ punctuation.section.brackets.begin.rhombus
+//                                                                 ^ punctuation.section.brackets.end.rhombus
+//           ^ punctuation.separator.rhombus
+def flags = [#true, #false, #inf, #neginf, #nan]
+//           ^^^^^ constant.language.rhombus
+//                  ^^^^^^ constant.language.rhombus
+//                          ^^^^ constant.language.rhombus
+//                                ^^^^^^^ constant.language.rhombus
+//                                         ^^^^ constant.language.rhombus
+def d = x-1
+//       ^ keyword.operator.rhombus
+//        ^ constant.numeric.rhombus
+
+fun area(w :: Int, ~height: h :~ Int = 1):
+// <- keyword.control.rhombus
+//  ^^^^ entity.name.function.rhombus
+//       ^ variable.parameter.rhombus
+//                          ^ variable.parameter.rhombus
+//      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.parens.rhombus
+//      ^ punctuation.section.parens.begin.rhombus
+//         ^^ keyword.operator.rhombus
+//            ^^^ support.type.rhombus
+//                 ^^^^^^^ variable.parameter.keyword.rhombus
+//                        ^ punctuation.section.block.rhombus
+//                            ^^ keyword.operator.rhombus
+//                               ^^^ support.type.rhombus
+//                                   ^ keyword.operator.rhombus
+//                                      ^ punctuation.section.parens.end.rhombus
+//                                       ^ punctuation.section.block.rhombus
+  w * h
+//  ^ keyword.operator.rhombus
+
+class Posn(x, y)
+// <- keyword.control.rhombus
+//    ^^^^ entity.name.type.rhombus
+//         ^ variable.other.member.rhombus
+//            ^ variable.other.member.rhombus
+interface Shape
+//        ^^^^^ entity.name.type.rhombus
+enum Color
+//   ^^^^^ entity.name.type.rhombus
+veneer Big(this :: Int)
+//     ^^^ entity.name.type.rhombus
+annot.macro 'Small': 'Int'
+// <- keyword.control.rhombus
+//           ^^^^^ entity.name.type.rhombus
+//          ^^^^^^^ meta.quotes.rhombus
+//          ^ punctuation.section.quotes.begin.rhombus
+//                ^ punctuation.section.quotes.end.rhombus
+macro 'twice $e': '$e + $e'
+// <- keyword.control.rhombus
+//     ^^^^^ entity.name.function.rhombus
+//           ^ keyword.operator.rhombus
+defn.macro 'define_one $id': 'def $id = 1'
+// <- keyword.control.rhombus
+//          ^^^^^^^^^^ entity.name.function.rhombus
+expr.macro 'one': '1'
+//          ^^^ entity.name.function.rhombus
+let counter = 0
+// <- keyword.control.rhombus
+//  ^^^^^^^ variable.other.definition.rhombus
+def mutable count = 0
+//  ^^^^^^^ keyword.control.rhombus
+//          ^^^^^ variable.other.definition.rhombus
+class Cell(mutable value, private secret :: Int)
+//         ^^^^^^^ keyword.control.rhombus
+//                 ^^^^^ variable.other.member.rhombus
+//                        ^^^^^^^ keyword.control.rhombus
+//                                ^^^^^^ variable.other.member.rhombus
+//                                          ^^^ support.type.rhombus
+def (a, b) = values(1, 2)
+//            ^ source.rhombus - variable.other.definition
+//           ^^^^^^ support.function.rhombus
+def a = area(Posn(1, 2))
+//      ^^^^ variable.function.rhombus
+//           ^^^^ support.class.rhombus
+def sh = Shape
+//       ^^^^^ support.class.rhombus
+def px = p.x
+//        ^ punctuation.accessor.rhombus
+//         ^ variable.other.member.rhombus
+
+match nums
+// <- keyword.control.rhombus
+| [x, y]: println(x ++ y)
+// <- punctuation.separator.alternative.rhombus
+//        ^^^^^^^ support.function.rhombus
+//                  ^^ keyword.operator.rhombus
+| _: #void; x || y
+//   ^^^^^ constant.language.rhombus
+//        ^ punctuation.separator.rhombus
+//            ^^ keyword.operator.rhombus
+
+def m = { a: 1 } ++ «x»
+//      ^ punctuation.section.braces.begin.rhombus
+//             ^ punctuation.section.braces.end.rhombus
+//                  ^ punctuation.section.guillemets.begin.rhombus
+//                   ^ meta.guillemets.rhombus
+//                    ^ punctuation.section.guillemets.end.rhombus
+
+def f = #{string->list}
+//      ^^ punctuation.section.escape.begin.rhombus
+//        ^^^^^^^^^^^^ meta.braces.racket support.function.builtin.racket
+//                    ^ punctuation.section.braces.end.racket
+def s = #{"a}b"}
+//          ^ string.quoted.double.racket
+//           ^^ string.quoted.double.racket
+//             ^ punctuation.section.braces.end.racket
+
+def p1 = @para(~size: 2){Hello @bold{world}!}
+//       ^ punctuation.definition.at-expression.rhombus
+//        ^^^^ variable.function.at-expression.rhombus
+//             ^^^^^ variable.parameter.keyword.rhombus
+//                    ^ constant.numeric.rhombus
+//                      ^ punctuation.section.braces.begin.at-expression.rhombus
+//                       ^^^^^ text.at.rhombus
+//                             ^ punctuation.definition.at-expression.rhombus
+//                              ^^^^ variable.function.at-expression.rhombus
+//                                   ^^^^^ text.at.rhombus
+//                                        ^ punctuation.section.braces.end.at-expression.rhombus
+def p2 = @verbatim|{raw {text} @x}|
+//                ^^ punctuation.section.braces.begin.at-expression.rhombus
+//                  ^^^^^^^^^^^^^ text.at.rhombus
+//                             ^^ text.at - punctuation
+//                               ^^ punctuation.section.braces.end.at-expression.rhombus
+def p3 = @verbatim|<{text |<@bold{x}}>|
+//                ^^^ punctuation.section.braces.begin.at-expression.rhombus
+//                        ^^^ punctuation.definition.at-expression.rhombus
+//                           ^^^^ variable.function.at-expression.rhombus
+//                                  ^^^ punctuation.section.braces.end.at-expression.rhombus
+def c1 = 1 @//{ a comment }
+//          ^^ punctuation.definition.comment.rhombus
+//            ^^^^^^^^^^^^^ comment.block.at-expression.rhombus
+def c2 = 2 @// a line comment
+//            ^^^^^^^^^^^^^^^ comment.line.at-expression.rhombus

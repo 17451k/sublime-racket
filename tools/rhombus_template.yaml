@@ -1,0 +1,578 @@
+%YAML 1.2
+---
+name: Rhombus
+scope: source.rhombus
+version: 2
+file_extensions:
+  - rhm
+first_line_match: '^#lang\s+rhombus'
+
+# Token shapes follow shrubbery/lex.rkt from the shrubbery-lib package.
+variables:
+  id_start: '[\p{L}_]'
+  id_char: '[\p{L}\p{M}\p{N}_]'
+  identifier: '(?:#%)?{{id_start}}{{id_char}}*'
+  id_boundary: '(?!{{id_char}})'
+  # Operator characters: ASCII symbols and punctuation other than grouping,
+  # separator, quote, `#`, `\`, `_` and `@`, plus Unicode math, currency and
+  # modifier symbols
+  opchar: '[!$%&*+\-./:<=>?^`|~\p{Sm}\p{Sc}\p{Sk}]'
+  opchar_no_colon: '[!$%&*+\-./<=>?^`|~\p{Sm}\p{Sc}\p{Sk}]'
+  uinteger: '[0-9](?:_?[0-9])*'
+  exponent: '[eE][+-]?{{uinteger}}'
+  forms: '__RHOMBUS_FORM_LIST__'
+  values: '__RHOMBUS_VALUE_LIST__'
+
+contexts:
+  main:
+    - include: comments
+    - include: lang-directive
+    - include: sexp-escape
+    - include: byte-string
+    - include: string
+    - include: constants
+    - include: number
+    - include: keyword-literal
+    - include: at-expression
+    - include: binding-names
+    - include: annotation
+    - include: identifiers
+    - include: member-access
+    - include: operators
+    - include: separators
+    - include: brackets-open
+    - include: brackets-close-stray
+
+  #############################################################
+  # Comments
+  #############################################################
+  comments:
+    - match: '//'
+      scope: punctuation.definition.comment.rhombus
+      push: line-comment
+    - match: '/\*'
+      scope: punctuation.definition.comment.begin.rhombus
+      push: block-comment
+    - match: '#//'
+      scope: punctuation.definition.comment.rhombus
+      push: group-comment
+    - match: '#![ /]'
+      scope: punctuation.definition.comment.rhombus
+      push: shebang-comment
+
+  # #// comments out the rest of the group: up to a separator, a closing
+  # bracket or the end of the line, with brackets and quotes balanced. A
+  # `#//` alone on its line comments out the group on the next non-blank line.
+  group-comment:
+    - meta_scope: comment.block.group.rhombus
+    - match: '\s*$'
+      set: group-comment-next-line
+    - match: '(?=\S)'
+      set: group-comment-rest
+
+  group-comment-next-line:
+    - meta_scope: comment.block.group.rhombus
+    - match: '(?=\S)'
+      set: group-comment-rest
+
+  group-comment-rest:
+    - meta_scope: comment.block.group.rhombus
+    - match: '(?=[;,)\]}»])'
+      pop: true
+    - match: $
+      pop: true
+    - include: group-comment-inner
+
+  group-comment-inner:
+    - match: '"(?:\\.|[^"\\])*"'
+    - match: '\('
+      push: group-comment-paren
+    - match: '\['
+      push: group-comment-bracket
+    - match: '\{'
+      push: group-comment-brace
+    - match: '«'
+      push: group-comment-guillemet
+    - match: "'"
+      push: group-comment-quote
+
+  group-comment-paren:
+    - meta_scope: comment.block.group.rhombus
+    - match: '\)'
+      pop: true
+    - include: group-comment-inner
+
+  group-comment-bracket:
+    - meta_scope: comment.block.group.rhombus
+    - match: '\]'
+      pop: true
+    - include: group-comment-inner
+
+  group-comment-brace:
+    - meta_scope: comment.block.group.rhombus
+    - match: '\}'
+      pop: true
+    - include: group-comment-inner
+
+  group-comment-guillemet:
+    - meta_scope: comment.block.group.rhombus
+    - match: '»'
+      pop: true
+    - include: group-comment-inner
+
+  group-comment-quote:
+    - meta_scope: comment.block.group.rhombus
+    - match: "'"
+      pop: true
+    - include: group-comment-inner
+
+  line-comment:
+    - meta_scope: comment.line.double-slash.rhombus
+    - match: $
+      pop: true
+
+  block-comment:
+    - meta_scope: comment.block.rhombus
+    - match: '/\*'
+      scope: punctuation.definition.comment.begin.rhombus
+      push: block-comment
+    - match: '\*/'
+      scope: punctuation.definition.comment.end.rhombus
+      pop: true
+
+  shebang-comment:
+    - meta_scope: comment.line.number-sign.rhombus
+    - match: $
+      pop: true
+
+  #############################################################
+  # #lang directive
+  #############################################################
+  lang-directive:
+    - match: '(#lang)(\s+)(\S+)'
+      captures:
+        1: keyword.control.lang.rhombus
+        3: variable.language.lang-name.rhombus
+
+  #############################################################
+  # #{...} S-expression escape, read as Racket; the Racket brace context
+  # finds the closing `}`
+  #############################################################
+  sexp-escape:
+    - match: '#\{'
+      scope: punctuation.section.escape.begin.rhombus
+      push: scope:source.racket#brace-body
+
+  #############################################################
+  # Strings
+  #############################################################
+  string:
+    - match: '"'
+      scope: punctuation.definition.string.begin.rhombus
+      push: string-body
+
+  string-body:
+    - meta_scope: string.quoted.double.rhombus
+    - include: string-escapes
+    - match: '\\u[0-9a-fA-F]{1,4}'
+      scope: constant.character.escape.rhombus
+    - match: '\\U[0-9a-fA-F]{1,6}'
+      scope: constant.character.escape.rhombus
+    - match: '"'
+      scope: punctuation.definition.string.end.rhombus
+      pop: true
+    # strings cannot span lines
+    - match: $
+      pop: true
+
+  byte-string:
+    - match: '#"'
+      scope: punctuation.definition.string.begin.rhombus
+      push: byte-string-body
+
+  byte-string-body:
+    - meta_scope: string.quoted.double.byte.rhombus
+    - include: string-escapes
+    - match: '"'
+      scope: punctuation.definition.string.end.rhombus
+      pop: true
+    - match: $
+      pop: true
+
+  string-escapes:
+    - match: '\\x[0-9a-fA-F]{1,2}'
+      scope: constant.character.escape.rhombus
+    - match: '\\[0-7]{1,3}'
+      scope: constant.character.escape.rhombus
+    - match: '\\["\\abtnvfre'']'
+      scope: constant.character.escape.rhombus
+
+  #############################################################
+  # Literals
+  #############################################################
+  constants:
+    - match: '#(?:true|false|void|inf|neginf|nan){{id_boundary}}'
+      scope: constant.language.rhombus
+
+  number:
+    - match: '0x[0-9a-fA-F](?:_?[0-9a-fA-F])*'
+      scope: constant.numeric.rhombus
+    - match: '0o[0-7](?:_?[0-7])*'
+      scope: constant.numeric.rhombus
+    - match: '0b[01](?:_?[01])*'
+      scope: constant.numeric.rhombus
+    - match: '{{uinteger}}/{{uinteger}}(?![0-9_./])'
+      scope: constant.numeric.rhombus
+    - match: '{{uinteger}}\.(?:{{uinteger}})?{{exponent}}'
+      scope: constant.numeric.rhombus
+    - match: '{{uinteger}}\.{{uinteger}}'
+      scope: constant.numeric.rhombus
+    # a trailing `.` is part of the number unless it starts an operator
+    - match: '{{uinteger}}\.(?!{{opchar}}|{{id_char}})'
+      scope: constant.numeric.rhombus
+    - match: '{{uinteger}}(?:{{exponent}})?'
+      scope: constant.numeric.rhombus
+
+  keyword-literal:
+    - match: '~{{id_start}}{{id_char}}*'
+      scope: variable.parameter.keyword.rhombus
+
+  #############################################################
+  # Binding positions
+  #############################################################
+  # A macro's name is the first term inside its quoted pattern
+  binding-names:
+    - match: '(fun)(\s+)({{identifier}})(?=\()'
+      captures:
+        1: keyword.control.rhombus
+        3: entity.name.function.rhombus
+      push: params-open
+    - match: '(defn\.macro|expr\.macro|fun|macro){{id_boundary}}(\s+)({{identifier}}){{id_boundary}}'
+      captures:
+        1: keyword.control.rhombus
+        3: entity.name.function.rhombus
+    - match: "(?:defn\\.macro|expr\\.macro|macro){{id_boundary}}(?=\\s+'{{identifier}}{{id_boundary}})"
+      scope: keyword.control.rhombus
+      push: quoted-function-name
+    - match: '(class)(\s+)({{identifier}})(?=\()'
+      captures:
+        1: keyword.control.rhombus
+        3: entity.name.type.rhombus
+      push: fields-open
+    - match: '(annot\.macro|class|interface|enum|veneer){{id_boundary}}(\s+)({{identifier}}){{id_boundary}}'
+      captures:
+        1: keyword.control.rhombus
+        3: entity.name.type.rhombus
+    - match: "(?:annot\\.macro){{id_boundary}}(?=\\s+'{{identifier}}{{id_boundary}})"
+      scope: keyword.control.rhombus
+      push: quoted-type-name
+    - match: '(def|let){{id_boundary}}(\s+)(?:(mutable)(\s+))?({{identifier}}){{id_boundary}}'
+      captures:
+        1: keyword.control.rhombus
+        3: keyword.control.rhombus
+        5: variable.other.definition.rhombus
+
+  # fun NAME(params): each parameter starts with an optional `~kw:` and an
+  # identifier; the rest of the parameter (annotation, default) is ordinary
+  params-open:
+    - match: '\('
+      scope: punctuation.section.parens.begin.rhombus
+      set: params-head
+
+  params-head:
+    - meta_scope: meta.parens.rhombus
+    - include: param-head-common
+    - match: '{{identifier}}'
+      scope: variable.parameter.rhombus
+      set: params-rest
+    - match: '(?=\S)'
+      set: params-rest
+
+  params-rest:
+    - meta_scope: meta.parens.rhombus
+    - match: ','
+      scope: punctuation.separator.rhombus
+      set: params-head
+    - include: param-rest-common
+
+  # class NAME(fields): the same shape, with field names as members
+  fields-open:
+    - match: '\('
+      scope: punctuation.section.parens.begin.rhombus
+      set: fields-head
+
+  fields-head:
+    - meta_scope: meta.parens.rhombus
+    - include: param-head-common
+    - match: '(?:private|protected|mutable){{id_boundary}}'
+      scope: keyword.control.rhombus
+    - match: '{{identifier}}'
+      scope: variable.other.member.rhombus
+      set: fields-rest
+    - match: '(?=\S)'
+      set: fields-rest
+
+  fields-rest:
+    - meta_scope: meta.parens.rhombus
+    - match: ','
+      scope: punctuation.separator.rhombus
+      set: fields-head
+    - include: param-rest-common
+
+  param-head-common:
+    - match: '\s+'
+    - include: comments
+    - match: '\)'
+      scope: punctuation.section.parens.end.rhombus
+      pop: true
+    - match: '(~{{id_start}}{{id_char}}*)(\s*)(:)(?!{{opchar}})'
+      captures:
+        1: variable.parameter.keyword.rhombus
+        3: punctuation.section.block.rhombus
+
+  param-rest-common:
+    - match: '\)'
+      scope: punctuation.section.parens.end.rhombus
+      pop: true
+    - include: main
+
+  quoted-function-name:
+    - match: '\s+'
+    - match: "(')({{identifier}})"
+      captures:
+        1: punctuation.section.quotes.begin.rhombus
+        2: entity.name.function.rhombus
+      set: quotes-body
+
+  quoted-type-name:
+    - match: '\s+'
+    - match: "(')({{identifier}})"
+      captures:
+        1: punctuation.section.quotes.begin.rhombus
+        2: entity.name.type.rhombus
+      set: quotes-body
+
+  annotation:
+    - match: '(::|:~)(?!{{opchar}})(\s*)({{identifier}}){{id_boundary}}'
+      captures:
+        1: keyword.operator.rhombus
+        3: support.type.rhombus
+
+  #############################################################
+  # Identifiers
+  #############################################################
+  identifiers:
+    - match: '{{forms}}{{id_boundary}}'
+      scope: keyword.control.rhombus
+    - match: '{{values}}{{id_boundary}}'
+      scope: support.function.rhombus
+    # CamelCase names are classes, as in Sublime's Python syntax
+    - match: '_?\p{Lu}[\p{Lu}\p{N}]*\p{Ll}+{{id_char}}*{{id_boundary}}'
+      scope: support.class.rhombus
+    - match: '{{identifier}}(?=\()'
+      scope: variable.function.rhombus
+    - match: '{{identifier}}'
+
+  #############################################################
+  # Operators and separators
+  #############################################################
+  member-access:
+    - match: '(\.)({{identifier}})'
+      captures:
+        1: punctuation.accessor.rhombus
+        2: variable.other.member.rhombus
+
+  operators:
+    # `#` followed by a quote or separator character
+    - match: '#['',:;|]'
+      scope: keyword.operator.rhombus
+    # a lone `|` or `:` is not an operator, and an operator cannot contain
+    # `//` or `/*` or end in `:` unless it is all colons
+    - match: '(?!\|(?!{{opchar}}))(?:(?!//|/\*){{opchar}})*(?:(?!//|/\*){{opchar_no_colon}})'
+      scope: keyword.operator.rhombus
+    - match: '::+'
+      scope: keyword.operator.rhombus
+
+  separators:
+    - match: '[,;]'
+      scope: punctuation.separator.rhombus
+    - match: ':'
+      scope: punctuation.section.block.rhombus
+    - match: '\|'
+      scope: punctuation.separator.alternative.rhombus
+
+  #############################################################
+  # Brackets and quotes
+  #############################################################
+  brackets-open:
+    - match: '\('
+      scope: punctuation.section.parens.begin.rhombus
+      push: parens-body
+    - match: '\['
+      scope: punctuation.section.brackets.begin.rhombus
+      push: brackets-body
+    - match: '\{'
+      scope: punctuation.section.braces.begin.rhombus
+      push: braces-body
+    - match: '«'
+      scope: punctuation.section.guillemets.begin.rhombus
+      push: guillemets-body
+    - match: "'"
+      scope: punctuation.section.quotes.begin.rhombus
+      push: quotes-body
+
+  brackets-close-stray:
+    - match: '\)'
+      scope: punctuation.section.parens.end.rhombus
+    - match: '\]'
+      scope: punctuation.section.brackets.end.rhombus
+    - match: '\}'
+      scope: punctuation.section.braces.end.rhombus
+    - match: '»'
+      scope: punctuation.section.guillemets.end.rhombus
+
+  parens-body:
+    - meta_scope: meta.parens.rhombus
+    - match: '\)'
+      scope: punctuation.section.parens.end.rhombus
+      pop: true
+    - include: main
+
+  brackets-body:
+    - meta_scope: meta.brackets.rhombus
+    - match: '\]'
+      scope: punctuation.section.brackets.end.rhombus
+      pop: true
+    - include: main
+
+  braces-body:
+    - meta_scope: meta.braces.rhombus
+    - match: '\}'
+      scope: punctuation.section.braces.end.rhombus
+      pop: true
+    - include: main
+
+  guillemets-body:
+    - meta_scope: meta.guillemets.rhombus
+    - match: '»'
+      scope: punctuation.section.guillemets.end.rhombus
+      pop: true
+    - include: main
+
+  quotes-body:
+    - meta_scope: meta.quotes.rhombus
+    - match: "'"
+      scope: punctuation.section.quotes.end.rhombus
+      pop: true
+    - include: main
+
+  #############################################################
+  # @-notation
+  #############################################################
+  at-expression:
+    - match: '@'
+      scope: punctuation.definition.at-expression.rhombus
+      push: at-cmd
+
+  at-cmd:
+    - match: '(//)\{'
+      captures:
+        1: punctuation.definition.comment.rhombus
+      set: at-block-comment
+    - match: '(//)\|[!-/:-?\[-`~]*\{'
+      captures:
+        1: punctuation.definition.comment.rhombus
+      set: at-block-comment-alt
+    - match: '//'
+      scope: punctuation.definition.comment.rhombus
+      set: at-line-comment
+    - match: '\('
+      scope: punctuation.section.parens.begin.rhombus
+      set: [at-after-cmd, parens-body]
+    - match: '«'
+      scope: punctuation.section.guillemets.begin.rhombus
+      set: [at-after-cmd, guillemets-body]
+    - match: '(?={{identifier}})'
+      set: [at-after-cmd, at-head]
+    - match: '(?=\{|\|)'
+      set: at-after-cmd
+    - match: '(?=.|$)'
+      pop: true
+
+  at-block-comment:
+    - meta_scope: comment.block.at-expression.rhombus
+    - match: '\{'
+      push: at-block-comment-nested
+    - match: '\}'
+      pop: true
+
+  at-block-comment-alt:
+    - meta_scope: comment.block.at-expression.rhombus
+    - match: '\}[!-/:-?\[-`~]*\|'
+      pop: true
+
+  at-block-comment-nested:
+    - meta_scope: comment.block.at-expression.rhombus
+    - match: '\{'
+      push: at-block-comment-nested
+    - match: '\}'
+      pop: true
+
+  at-line-comment:
+    - meta_scope: comment.line.at-expression.rhombus
+    - match: $
+      pop: true
+
+  at-head:
+    - match: '{{forms}}{{id_boundary}}'
+      scope: keyword.control.rhombus
+      pop: true
+    - match: '{{values}}{{id_boundary}}'
+      scope: support.function.rhombus
+      pop: true
+    - match: '{{identifier}}(?:\.{{identifier}})*'
+      scope: variable.function.at-expression.rhombus
+      pop: true
+
+  at-after-cmd:
+    - match: '\('
+      scope: punctuation.section.parens.begin.rhombus
+      push: parens-body
+    - match: '\['
+      scope: punctuation.section.brackets.begin.rhombus
+      push: brackets-body
+    - match: '\{'
+      scope: punctuation.section.braces.begin.at-expression.rhombus
+      set: at-body
+    # `|` and ASCII punctuation other than `{`, `|` and `@` before `{`
+    - match: '\|[!-/:-?\[-`~]*\{'
+      scope: punctuation.section.braces.begin.at-expression.rhombus
+      set: at-body-alt
+    - match: '(?=.|$)'
+      pop: true
+
+  at-body:
+    - meta_scope: text.at.rhombus
+    - match: '\{'
+      push: at-body-nested
+    - match: '\}'
+      scope: punctuation.section.braces.end.at-expression.rhombus
+      pop: true
+    - include: at-expression
+
+  at-body-nested:
+    - meta_scope: text.at.rhombus
+    - match: '\{'
+      push: at-body-nested
+    - match: '\}'
+      pop: true
+    - include: at-expression
+
+  at-body-alt:
+    - meta_scope: text.at.rhombus
+    - match: '\}[!-/:-?\[-`~]*\|'
+      scope: punctuation.section.braces.end.at-expression.rhombus
+      pop: true
+    - match: '\|[!-/:-?\[-`~]*@'
+      scope: punctuation.definition.at-expression.rhombus
+      push: at-cmd

@@ -5,6 +5,7 @@ A Sublime Text 4 plugin for the [Racket](https://racket-lang.org) programming la
 Current features include:
 
 - syntax definition and highlighting: every Racket form and literal is scoped
+- Rhombus: highlighting for `.rhm` files, with the build system
 - build system: run, test, compile and format from command palette
 - symbol indexing: `Goto Symbol` lists defined functions and structs
 - comment settings: `Toggle Comment` uses `;` and `#| |#`

@@ -1,0 +1,38 @@
+#lang rhombus
+
+// Line comment, and a block comment: /* nested /* inside */ */
+import:
+  rhombus/rx open
+  lib("racket/math.rkt").sqr
+  lib("racket/base.rkt").#{string->list}
+
+export:
+  Point
+  distance
+
+class Point(x :: Real, y :: Real)
+
+fun distance(p :: Point, q :: Point) :: Real:
+  math.sqrt(sqr(p.x - q.x) + sqr(p.y - q.y))
+
+def origin = Point(0, 0)
+
+fun describe(pt, ~precision: digits = 2):
+  let d = distance(origin, pt)
+  let tag = #'polar
+  to_string(tag) +& ": " +& d.to_string()
+
+for List (n in 0..5):
+  skip_when n mod 2 == 0
+  #// (this group is commented out)
+  [n + 1, 0xff, 1/2, #inf, Char"λ", #true]
+
+match "12-34"
+| rx'($a: digit+) "-" ($b: digit+)': [a, b]
+| ~else: "no match"
+
+def chars = #{string->list}("abc")
+
+fun para(~size: n, & body): [n, body]
+fun bold(& body): body
+def doc = @para(~size: 2){Hello @bold{world}!}

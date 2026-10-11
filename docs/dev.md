@@ -55,8 +55,8 @@ there.
 
 ## Regenerating the syntax files
 
-`resources/Racket.sublime-syntax` and `resources/Scribble.sublime-syntax` are generated; never
-edit them by hand. The hand-written part is `tools/syntax_template.yaml`;
+`resources/Racket.sublime-syntax`, `resources/Scribble.sublime-syntax` and
+`resources/Rhombus.sublime-syntax` are generated; never edit them by hand. The hand-written part is `tools/syntax_template.yaml`;
 the Scribble file is the same syntax with a prose top level. The three identifier lists (special
 forms, builtin procedures, builtin values) are computed from the exports of
 the `racket` module of the installed Racket:
@@ -64,6 +64,11 @@ the `racket` module of the installed Racket:
 ```sh
 racket tools/gen_syntax.rkt
 ```
+
+The Rhombus syntax comes from `tools/rhombus_template.yaml`. Its two lists
+are computed from the exports of the `rhombus` module in every space:
+names that evaluate as a Rhombus expression are values, the rest are
+forms. This needs the `rhombus` package installed.
 
 Validate the result by running the syntax tests and the regex compatibility
 check (see above) and checking the Sublime console for syntax-loading errors.
@@ -124,6 +129,40 @@ Tools > Developer > Show Scope Name to see the scope under the cursor.
 | `@;{ ... }` block comment | `comment.block.at-expression.racket` (delimiters: `punctuation.definition.comment.racket`) |
 | `@; ...` line comment | `comment.line.at-expression.racket` (delimiter: `punctuation.definition.comment.racket`) |
 
+### Rhombus scopes
+
+| Construct | Scope |
+|---|---|
+| `#lang` keyword / target name | `keyword.control.lang.rhombus` / `variable.language.lang-name.rhombus` |
+| `//` line comment | `comment.line.double-slash.rhombus` |
+| `/* ... */` block comment (nests) | `comment.block.rhombus` |
+| `#//` group comment | `comment.block.group.rhombus` (marker: `punctuation.definition.comment.rhombus`) |
+| `#!` line | `comment.line.number-sign.rhombus` |
+| Strings / byte strings | `string.quoted.double.rhombus` / `string.quoted.double.byte.rhombus` |
+| String escapes | `constant.character.escape.rhombus` |
+| Numbers | `constant.numeric.rhombus` |
+| `#true` `#false` `#void` `#inf` `#neginf` `#nan` | `constant.language.rhombus` |
+| `~keyword` | `variable.parameter.keyword.rhombus` |
+| Operators | `keyword.operator.rhombus` |
+| `()` `[]` `{}` `«»` `'…'` | `punctuation.section.{parens,brackets,braces,guillemets,quotes}.{begin,end}.rhombus`; bodies `meta.{parens,brackets,braces,guillemets,quotes}.rhombus` |
+| `,` `;` | `punctuation.separator.rhombus` |
+| `:` | `punctuation.section.block.rhombus` |
+| `\|` | `punctuation.separator.alternative.rhombus` |
+| `#{` `}` | `#{`: `punctuation.section.escape.begin.rhombus`; the body carries Racket scopes and the closing `}` is `punctuation.section.braces.end.racket` |
+| Form (non-value export of `rhombus`) | `keyword.control.rhombus` |
+| Value export of `rhombus` | `support.function.rhombus` |
+| Name after `fun`, `macro`, `defn.macro`, `expr.macro` | `entity.name.function.rhombus` |
+| Name after `class`, `interface`, `annot.macro`, `enum`, `veneer` | `entity.name.type.rhombus` |
+| Name after `def`, `let` | `variable.other.definition.rhombus` |
+| Identifier after `::` or `:~` | `support.type.rhombus` |
+| CamelCase identifier (`Posn`, `_Rect`) not in the generated lists | `support.class.rhombus` |
+| Identifier directly before `(` (call) | `variable.function.rhombus` |
+| Parameter names in `fun NAME(...)` | `variable.parameter.rhombus`; the list body is `meta.parens.rhombus` |
+| Field names in `class NAME(...)` | `variable.other.member.rhombus` |
+| `.` before an identifier / the identifier | `punctuation.accessor.rhombus` / `variable.other.member.rhombus` |
+| `@` / command / text body | `punctuation.definition.at-expression.rhombus` / `variable.function.at-expression.rhombus` / `text.at.rhombus` |
+| `@//` comments | `comment.{block,line}.at-expression.rhombus` |
+
 ## Known limitations
 
 Sublime's syntax engine is a regex/context-stack matcher, not a parser, so
@@ -161,6 +200,22 @@ some constructs are approximated:
   `#lang at-exp racket`. A bare symbol that happens to start with `@` at the
   start of a token (rather than appearing mid-symbol, e.g. `a@b`) is
   misread as an at-expression opener.
+
+- **A Rhombus `#//` comment ends at the end of its first line**, at a `,` or
+  `;`, or before a closing bracket; brackets and quotes opened inside it may
+  span lines. A `#//` alone on its line comments out the next non-blank
+  line in the same way. A group that continues onto following lines through
+  a `:` block or `|` alternatives is only commented to the end of its first
+  line, because indentation-based continuation can't be tracked.
+- **A sign or leading `.` before a Rhombus number is scoped as an operator**
+  (`-2` is `-` then `2`), because Sublime's fast regex engine has no
+  lookbehind to tell a signed literal from subtraction.
+- **Rhombus operator characters are ASCII plus Unicode `Sm`, `Sc` and `Sk`
+  symbols.** Other Unicode punctuation and symbols that shrubbery accepts in
+  operators are not recognised.
+- **Rhombus annotations and binding names are single identifiers.** Only the
+  identifier directly after `::`, `:~`, `def` or `fun` is scoped; patterns
+  such as `def (a, b) = …` and dotted annotations are left alone.
 
 ## Possible future syntax additions
 
