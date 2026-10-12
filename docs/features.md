@@ -53,7 +53,9 @@ like the Racket ones. Names defined by `fun`, `macro`, `class`, `def` and
 similar forms, and annotations after `::` or `:~`, are scoped as bindings
 and types. Function calls, the parameters of `fun NAME(...)`, the fields
 of `class NAME(...)`, and members after `.` have their own scopes. `#{...}` escapes are highlighted as Racket, and `@`-notation
-text bodies as text.
+text bodies as text. A `.rkt` file whose first line is `#lang rhombus` switches to
+the Rhombus syntax, and back when the line is removed, each time the file is
+opened, saved or reloaded.
 
 Indentation, smart brackets, the REPL send commands and documentation
 lookup work in Racket files only. The build system is available for
