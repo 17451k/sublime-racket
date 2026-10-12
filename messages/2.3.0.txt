@@ -1,0 +1,10 @@
+Sublime Racket 2.3.0
+====================
+
+This release adds the following changes:
+
+  - Rhombus support: syntax highlighting for `.rhm` files, a build system,
+    and automatic switching to the Rhombus syntax when a file starts with
+    `#lang rhombus`.
+  - Smart brackets: new lines after an open bracket are indented in the
+    `raco fmt` style and closing brackets are outdented automatically.
