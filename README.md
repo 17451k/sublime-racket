@@ -40,7 +40,7 @@ Install the server with `raco pkg install racket-langserver`, then register it i
       "racket-langserver": {
         "enabled": true,
         "command": ["racket", "--lib", "racket-langserver"],
-        "selector": "source.racket"
+        "selector": "source.racket, source.rhombus"
       }
     }
   }
