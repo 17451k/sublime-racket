@@ -42,6 +42,11 @@ class ReplTestCase(ViewMixin, unittesting.DeferrableTestCase):
         self.assertEqual(self.window.active_view(), self.view)
         cls(self.window).run()
 
+    def rhombus_view(self) -> sublime.View:
+        view = self.scratch_view("scope:source.rhombus")
+        self.window.focus_view(view)
+        return view
+
     def live_repl(self) -> None:
         self.find_terminal.return_value = Mock()
 
@@ -67,6 +72,15 @@ class TestIsEnabled(ReplTestCase):
         self.window.focus_view(self.view)
         for cls in self.COMMANDS:
             self.assertTrue(cls(self.window).is_enabled(), cls.__name__)
+
+    def test_rhombus_view(self) -> None:
+        self.rhombus_view()
+        self.assertTrue(repl.RacketRunInReplCommand(self.window).is_enabled())
+        self.assertTrue(repl.RacketSendSelectionToReplCommand(self.window).is_enabled())
+        self.assertFalse(
+            repl.RacketSendDefinitionToReplCommand(self.window).is_enabled()
+        )
+        self.assertFalse(repl.RacketSendSexpToReplCommand(self.window).is_enabled())
 
     def test_plain_view(self) -> None:
         view = self.scratch_view("scope:text.plain")
@@ -94,6 +108,18 @@ class TestOpenRepl(ReplTestCase):
             focus=True,
         )
 
+    def test_rhombus(self) -> None:
+        self.rhombus_view()
+        repl.RacketOpenReplCommand(self.window).run()
+        self.open_terminal.assert_called_once_with(
+            self.window,
+            ["racket", "-I", "rhombus", "-i"],
+            None,
+            tag=TAG,
+            title=TITLE,
+            focus=True,
+        )
+
 
 class TestSendToRepl(ReplTestCase):
     def test_live(self) -> None:
@@ -113,6 +139,25 @@ class TestSendToRepl(ReplTestCase):
         )
         self.send_when_ready.assert_called_once_with(self.window, "(a)\n", TAG)
         self.send_to_terminal.assert_not_called()
+
+    def test_rhombus_live(self) -> None:
+        self.live_repl()
+        view = self.rhombus_view()
+        repl._send_to_repl(self.window, view, "fun f(x):\n  x\n")
+        self.assert_sent("fun f(x):\n  x\n\n")
+
+    def test_rhombus_starts_repl(self) -> None:
+        view = self.rhombus_view()
+        repl._send_to_repl(self.window, view, "1 + 2")
+        self.open_terminal.assert_called_once_with(
+            self.window,
+            ["racket", "-I", "rhombus", "-i"],
+            None,
+            tag=TAG,
+            title=TITLE,
+            focus=False,
+        )
+        self.send_when_ready.assert_called_once_with(self.window, "1 + 2\n\n", TAG)
 
     def test_start_fails(self) -> None:
         self.open_terminal.return_value = False
@@ -187,12 +232,12 @@ class TestSendSexp(ReplTestCase):
 
 
 class TestRunInRepl(ReplTestCase):
-    def open_module(self):
+    def open_module(self, name: str = "mod.rkt", header: str = "#lang racket\n"):
         directory = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, directory, True)
-        path = os.path.join(directory, "mod.rkt")
+        path = os.path.join(directory, name)
         with open(path, "w") as f:
-            f.write("#lang racket\n")
+            f.write(header)
 
         view = self.window.open_file(path)
 
@@ -239,3 +284,23 @@ class TestRunInRepl(ReplTestCase):
         with open(view.file_name()) as f:
             self.assertIn("(define a 1)\n", f.read())
         self.open_terminal.assert_called_once()
+
+    def test_rhombus(self):
+        view = yield from self.open_module("mod.rhm", "#lang rhombus\n")
+        self.run_in_repl(view)
+        path = view.file_name()
+        self.open_terminal.assert_called_once_with(
+            self.window,
+            [
+                "racket",
+                "-i",
+                "-e",
+                "(require rhombus/runtime-config)",
+                "-e",
+                f'(enter! (file "{path}"))',
+            ],
+            os.path.dirname(path),
+            tag=TAG,
+            title=TITLE,
+            focus=False,
+        )

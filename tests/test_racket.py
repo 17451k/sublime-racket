@@ -19,6 +19,15 @@ class TestIsRacket(RacketTestCase):
         self.assertFalse(racket.is_racket(self.plain))
 
 
+class TestIsRhombus(RacketTestCase):
+    def test_is_rhombus(self) -> None:
+        rhombus = self.scratch_view("scope:source.rhombus")
+        self.assertTrue(racket.is_rhombus(rhombus))
+        self.assertFalse(racket.is_rhombus(self.view))
+        self.assertFalse(racket.is_rhombus(None))
+        self.assertFalse(racket.is_rhombus(self.plain))
+
+
 class TestExecutable(RacketTestCase):
     def test_default(self) -> None:
         self.assertEqual(racket.executable(self.view), "racket")
@@ -28,6 +37,11 @@ class TestExecutable(RacketTestCase):
     def test_setting(self) -> None:
         self.view.settings().set("racket_executable", "/opt/racket/bin/racket")
         self.assertEqual(racket.executable(self.view), "/opt/racket/bin/racket")
+
+    def test_rhombus_setting(self) -> None:
+        rhombus = self.scratch_view("scope:source.rhombus")
+        rhombus.settings().set("racket_executable", "/opt/racket/bin/racket")
+        self.assertEqual(racket.executable(rhombus), "/opt/racket/bin/racket")
 
     def test_null_setting(self) -> None:
         self.view.settings().set("racket_executable", None)

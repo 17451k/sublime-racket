@@ -57,8 +57,8 @@ text bodies as text. A `.rkt` file whose first line is `#lang rhombus` switches 
 the Rhombus syntax, and back when the line is removed, each time the file is
 opened, saved or reloaded.
 
-Indentation, smart brackets, the REPL send commands and documentation
-lookup work in Racket files only. The build system is available for
+Indentation, smart brackets, **Send Definition**, **Send S-Expression** and
+documentation lookup work in Racket files only. The build system is available for
 Rhombus files; its **Format** variant runs `raco fmt`, which only formats
 Racket, because a build variant can't be limited to some files.
 
@@ -138,11 +138,15 @@ REPL commands run in a [Terminus](https://packagecontrol.io/packages/Terminus)
 terminal, so that package must be installed. All commands are in the command
 palette:
 
-- **Racket: Open REPL**: starts a fresh `racket -i` session
+- **Racket: Open REPL**: starts a fresh `racket -i` session, or
+  `racket -I rhombus -i` from a Rhombus file
 - **Racket: Run File in REPL**: saves the current file and starts a REPL inside
-  its module, so its definitions are available at the prompt
+  its module, so its definitions are available at the prompt (for a Rhombus
+  file, the REPL also loads `rhombus/runtime-config`, so it reads Rhombus
+  syntax)
 - **Racket: Send Selection to REPL**: sends the selection, or the current line
-  when nothing is selected
+  when nothing is selected; text sent from a Rhombus file ends with a blank
+  line, which the Rhombus REPL needs to finish a `:` block
 - **Racket: Send Definition to REPL**: sends the top-level form at the cursor;
   forms inside `module`, `module*` and `module+` count as top-level
 - **Racket: Send S-Expression to REPL**: sends the innermost form at the
@@ -150,7 +154,7 @@ palette:
   a closing bracket counts as inside that form
 
 The send commands start a REPL if none is running. Set `racket_executable` in
-the Racket syntax settings if `racket` is not on `PATH`.
+the Racket or Rhombus syntax settings if `racket` is not on `PATH`.
 
 ## Documentation lookup
 

@@ -18,6 +18,13 @@ def _open_repl(
     )
 
 
+def _repl_cmd(view: sublime.View | None) -> list[str]:
+    exe = racket.executable(view)
+    if racket.is_rhombus(view):
+        return [exe, "-I", "rhombus", "-i"]
+    return [exe, "-i"]
+
+
 def _send_to_repl(window: sublime.Window, view: sublime.View, text: str) -> None:
     """Send text to the live REPL, starting one when needed."""
     text = text.strip()
@@ -27,14 +34,16 @@ def _send_to_repl(window: sublime.Window, view: sublime.View, text: str) -> None
         return
 
     text += "\n"
+    # The Rhombus REPL reads a `:` block until a blank line
+    if racket.is_rhombus(view):
+        text += "\n"
 
     if terminus.find_terminal(window, REPL_TAG):
         terminus.send_to_terminal(window, text, REPL_TAG)
         return
 
     # No live REPL; start one and send once the terminal is up
-    exe = racket.executable(view)
-    if _open_repl(window, [exe, "-i"], cwd=None, focus=False):
+    if _open_repl(window, _repl_cmd(view), cwd=None, focus=False):
         terminus.send_when_ready(window, text, REPL_TAG)
 
 
@@ -42,15 +51,17 @@ class RacketOpenReplCommand(sublime_plugin.WindowCommand):
     """Start a fresh Racket REPL in Terminus."""
 
     def run(self) -> None:
-        exe = racket.executable(self.window.active_view())
-        _open_repl(self.window, [exe, "-i"], cwd=None, focus=True)
+        _open_repl(
+            self.window, _repl_cmd(self.window.active_view()), cwd=None, focus=True
+        )
 
 
 class RacketRunInReplCommand(sublime_plugin.WindowCommand):
     """Start a fresh REPL in Terminus inside the current file's module."""
 
     def is_enabled(self) -> bool:
-        return racket.is_racket(self.window.active_view())
+        view = self.window.active_view()
+        return racket.is_racket(view) or racket.is_rhombus(view)
 
     def run(self) -> None:
         view = self.window.active_view()
@@ -77,19 +88,19 @@ class RacketRunInReplCommand(sublime_plugin.WindowCommand):
         enter = '(enter! (file "{}"))'.format(path.replace('"', '\\"'))
 
         exe = racket.executable(view)
-        _open_repl(
-            self.window,
-            [exe, "-i", "-e", enter],
-            cwd=cwd,
-            focus=False,
-        )
+        if racket.is_rhombus(view):
+            cmd = [exe, "-i", "-e", "(require rhombus/runtime-config)", "-e", enter]
+        else:
+            cmd = [exe, "-i", "-e", enter]
+        _open_repl(self.window, cmd, cwd=cwd, focus=False)
 
 
 class RacketSendSelectionToReplCommand(sublime_plugin.WindowCommand):
     """Send the selection, or the line at the cursor, to the REPL."""
 
     def is_enabled(self) -> bool:
-        return racket.is_racket(self.window.active_view())
+        view = self.window.active_view()
+        return racket.is_racket(view) or racket.is_rhombus(view)
 
     def run(self) -> None:
         view = self.window.active_view()
